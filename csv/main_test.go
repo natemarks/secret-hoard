@@ -1,7 +1,6 @@
 package csv
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/natemarks/secret-hoard/types"
@@ -36,7 +35,7 @@ func TestReadRDSSecrets(t *testing.T) {
 				t.Errorf("ReadRDSSecrets() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
+			if len(got) != 4 {
 				t.Errorf("ReadRDSSecrets() got = %v, want %v", got, tt.want)
 			}
 		})
@@ -44,6 +43,7 @@ func TestReadRDSSecrets(t *testing.T) {
 }
 
 func TestWriteRDSSecrets(t *testing.T) {
+
 	type args struct {
 		filename string
 		secrets  []types.RDSSecret

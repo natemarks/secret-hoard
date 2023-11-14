@@ -4,12 +4,12 @@
 # Be sure to place this BEFORE `include` directives, if any.
 DEFAULT_BRANCH := main
 THIS_FILE := $(lastword $(MAKEFILE_LIST))
-PKG := github.com/natemarks/getsecrets
+PKG := github.com/natemarks/secret-hoard
 COMMIT := $(shell git rev-parse HEAD)
 PKG_LIST := $(shell go list ${PKG}/... | grep -v /vendor/)
 GO_FILES := $(shell find . -name '*.go' | grep -v /vendor/)
 CDIR = $(shell pwd)
-EXECUTABLES := getsecrets
+EXECUTABLES := secret-hoard
 GOOS := linux
 GOARCH := amd64
 
@@ -27,7 +27,7 @@ ${EXECUTABLES}:
         echo "COMMIT: $(COMMIT)" >> build/$(COMMIT)/$${o}/$${a}/version.txt ; \
         env GOOS=$${o} GOARCH=$${a} \
         go build  -v -o build/$(COMMIT)/$${o}/$${a}/$@ \
-				-ldflags="-X github.com/natemarks/getsecrets/version.Version=${COMMIT}" ${PKG}/cmd/$@; \
+				-ldflags="-X github.com/natemarks/secret-hoard/version.Version=${COMMIT}" ${PKG}/cmd/$@; \
 	  done \
     done ; \
 
@@ -39,7 +39,7 @@ release: git-status build
 	mkdir -p release/$(VERSION)
 	@for o in $(GOOS); do \
 	  for a in $(GOARCH); do \
-        tar -C ./build/$(COMMIT)/$${o}/$${a} -czvf release/$(VERSION)/getsecrets_$(VERSION)_$${o}_$${a}.tar.gz . ; \
+        tar -C ./build/$(COMMIT)/$${o}/$${a} -czvf release/$(VERSION)/secret-hoard_$(VERSION)_$${o}_$${a}.tar.gz . ; \
 	  done \
     done ; \
 
