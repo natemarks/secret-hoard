@@ -39,6 +39,7 @@ type RDSSecretData struct {
 	Username             string `json:"username"`
 }
 
+// RDSSecret is the struct of the secret generated for RDS by CDK deployment
 type RDSSecret struct {
 	Data     RDSSecretData
 	Metadata RDSSecretMetadata

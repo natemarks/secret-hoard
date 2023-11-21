@@ -6,17 +6,25 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/natemarks/secret-hoard/rds"
+
 	"github.com/natemarks/secret-hoard/types"
 	"github.com/rs/zerolog"
 )
 
+// ReadRDSSecrets reads a CSV file and returns a slice of RDSSecrets
 func ReadRDSSecrets(filename string, log *zerolog.Logger) ([]types.RDSSecret, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		log.Error().Err(err).Msgf("error opening file %s", filename)
 		return nil, err
 	}
-	defer file.Close()
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+			log.Error().Err(err).Msgf("error closing file %s", filename)
+		}
+	}(file)
 
 	reader := csv.NewReader(file)
 	records, err := reader.ReadAll()
@@ -54,20 +62,32 @@ func ReadRDSSecrets(filename string, log *zerolog.Logger) ([]types.RDSSecret, er
 				Type:        record[3],
 			},
 		}
+		// try to override the endpoint by looking up the RDS instance
+		host, err := rds.GetRDSEndpoint(record[7])
+		if err != nil {
+			log.Error().Err(err).Msgf("error getting RDS endpoint for %s", record[7])
+		} else {
+			secret.Data.Host = host
+		}
 		secrets = append(secrets, secret)
 	}
 
 	return secrets, nil
 }
 
-// WriteRDSSecretsToCSV writes a slice of RDSSecrets to a CSV file
+// WriteRDSSecrets writes a slice of RDSSecrets to a CSV file
 func WriteRDSSecrets(filename string, secrets []types.RDSSecret, log *zerolog.Logger) error {
 	file, err := os.Create(filename)
 	if err != nil {
 		log.Error().Err(err).Msgf("error creating file %s", filename)
 		return err
 	}
-	defer file.Close()
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+
+		}
+	}(file)
 
 	writer := csv.NewWriter(file)
 

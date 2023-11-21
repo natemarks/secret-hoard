@@ -13,6 +13,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
+// CreateRDSSecrets creates RDS secrets in AWS Secrets Manager
 func CreateRDSSecrets(secrets []types.RDSSecret, log *zerolog.Logger) error {
 	ctx := context.Background()
 	cfg, err := config.LoadDefaultConfig(ctx)
@@ -36,6 +37,7 @@ func CreateRDSSecrets(secrets []types.RDSSecret, log *zerolog.Logger) error {
 			"Instance":    secret.Metadata.Instance,
 			"Database":    secret.Metadata.Database,
 			"Type":        secret.Metadata.Type,
+			"Source":      "secret-hoard",
 		}
 
 		// Create the secret
