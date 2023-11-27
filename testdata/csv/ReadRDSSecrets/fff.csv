@@ -1,4 +1,4 @@
-dev,zinstance1,,master,passwordmas,postgres,5432,zidentifier,zhostname,usermas
-dev,zinstance1,,monitoring,passwordmon,postgres,5432,zidentifier,zhostname,usermon
-dev,zinstance1,mdb1,app_readwrite,passwordrw,postgres,5432,zidentifier,zhostname,userrw
-dev,zinstance1,mdb1,app_readonly,passwordro,postgres,5432,zidentifier,zhostname,userro
+rdspostgres,dev,zinstance1,,master,passwordmas,postgres,5432,zidentifier,zhostname,usermas
+rdspostgres,dev,zinstance1,,monitoring,passwordmon,postgres,5432,zidentifier,zhostname,usermon
+rdspostgres,dev,zinstance1,mdb1,app_readwrite,passwordrw,postgres,5432,zidentifier,zhostname,userrw
+rdspostgres,dev,zinstance1,mdb1,app_readonly,passwordro,postgres,5432,zidentifier,zhostname,userro

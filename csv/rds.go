@@ -36,36 +36,37 @@ func ReadRDSSecrets(filename string, log *zerolog.Logger) ([]types.RDSSecret, er
 	var secrets []types.RDSSecret
 
 	for _, record := range records {
-		// Assuming CSV columns are in order: Environment, Instance, Database, Type,
+		// Assuming CSV columns are in order: ResourceType, Environment, Instance, Database, Access,
 		// Password, Engine, Port, DbInstanceIdentifier, Host, Username
-		if strings.ToLower(record[0]) == "environment" {
+		if strings.ToLower(record[0]) == "resourcetype" {
 			continue
 		}
-		port, err := strconv.Atoi(record[6])
+		port, err := strconv.Atoi(record[7])
 		if err != nil {
 			log.Error().Err(err).Msgf("error converting port %s to int", record[6])
 			continue
 		}
 		secret := types.RDSSecret{
 			Data: types.RDSSecretData{
-				Password:             record[4],
-				Engine:               record[5],
+				Password:             record[5],
+				Engine:               record[6],
 				Port:                 port,
-				DbInstanceIdentifier: record[7],
-				Host:                 record[8],
-				Username:             record[9],
+				DbInstanceIdentifier: record[8],
+				Host:                 record[9],
+				Username:             record[10],
 			},
 			Metadata: types.RDSSecretMetadata{
-				Environment: record[0],
-				Instance:    record[1],
-				Database:    record[2],
-				Type:        record[3],
+				ResourceType: record[0],
+				Environment:  record[1],
+				Instance:     record[2],
+				Database:     record[3],
+				Access:       record[4],
 			},
 		}
 		// try to override the endpoint by looking up the RDS instance
-		host, err := rds.GetRDSEndpoint(record[7])
+		host, err := rds.GetRDSEndpoint(record[8])
 		if err != nil {
-			log.Error().Err(err).Msgf("error getting RDS endpoint for %s", record[7])
+			log.Error().Err(err).Msgf("error getting RDS endpoint for %s", record[8])
 		} else {
 			secret.Data.Host = host
 		}
@@ -93,7 +94,7 @@ func WriteRDSSecrets(filename string, secrets []types.RDSSecret, log *zerolog.Lo
 
 	// Write CSV header
 	err = writer.Write([]string{
-		"Environment", "Instance", "Database", "Type",
+		"ResourceType", "Environment", "Instance", "Database", "Access",
 		"Password", "Engine", "Port", "DbInstanceIdentifier", "Host", "Username",
 	})
 	if err != nil {
@@ -104,10 +105,11 @@ func WriteRDSSecrets(filename string, secrets []types.RDSSecret, log *zerolog.Lo
 	// Write data rows
 	for _, secret := range secrets {
 		record := []string{
+			secret.Metadata.ResourceType,
 			secret.Metadata.Environment,
 			secret.Metadata.Instance,
 			secret.Metadata.Database,
-			secret.Metadata.Type,
+			secret.Metadata.Access,
 			secret.Data.Password,
 			secret.Data.Engine,
 			strconv.Itoa(secret.Data.Port),

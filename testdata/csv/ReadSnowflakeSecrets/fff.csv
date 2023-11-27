@@ -1,0 +1,2 @@
+snowflake,dev,mywarehouse,admin,mypassword,myaccountname,myusername
+snowflake,staging,mywarehouse,readonly,mypassword,myaccountname,myusername

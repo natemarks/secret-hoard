@@ -1,26 +1,31 @@
 package types
 
+import "fmt"
+
 // RDSSecretMetadata RDS secret metadata for tagging
-// Environment: sandbox, dev, integration, staging, production
-// Instance: the unique name of the RDS instance""
-// Database: the name of the database in the instance, empty is used for master and monitoring
-// Type: the type of secret (master, monitoring, app_readwrite, app_readonly)
 type RDSSecretMetadata struct {
-	Environment string `json:"environment"`
-	Instance    string `json:"instance"`
-	Database    string `json:"database"`
-	Type        string `json:"type"`
+	ResourceType string `json:"resourceType"` // rdspostgres
+	Environment  string `json:"environment"`  // dev, integration, staging, production
+	Instance     string `json:"instance"`     // some_instance
+	Database     string `json:"database"`     // some_database
+	Access       string `json:"access"`       // master, monitoring, app_readwrite, app_readonly
 }
 
-// ToMap converts RDSSecretMetadata to a map of strings to simplify tagging
-func (rm RDSSecretMetadata) ToMap() map[string]string {
+// Map converts RDSSecretMetadata to a map of strings to simplify tagging
+func (rm RDSSecretMetadata) Map() map[string]string {
 	attributes := map[string]string{
-		"Environment": rm.Environment,
-		"Instance":    rm.Instance,
-		"Database":    rm.Database,
-		"Type":        rm.Database,
+		"ResourceType": rm.ResourceType,
+		"Environment":  rm.Environment,
+		"Instance":     rm.Instance,
+		"Database":     rm.Database,
+		"Access":       rm.Access,
 	}
 	return attributes
+}
+
+// SecretID returns the secret id for the secret
+func (rm RDSSecretMetadata) SecretID() string {
+	return fmt.Sprintf("%v/%v/%v/%v/%v", rm.ResourceType, rm.Environment, rm.Instance, rm.Database, rm.Access)
 }
 
 // RDSSecretData is the struct of the secret generated for RDS by CDK deployment

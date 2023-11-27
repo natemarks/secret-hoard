@@ -1,2 +1,2 @@
-Environment,Instance,Database,Type,Password,Engine,Port,DbInstanceIdentifier,Host,Username
-environment,instance,database,type,password,postgres,5432,dbInstanceIdentifier,host,username
+ResourceType,Environment,Instance,Database,Access,Password,Engine,Port,DbInstanceIdentifier,Host,Username
+rdspostgres,environment,instance,database,type,password,postgres,5432,dbInstanceIdentifier,host,username
