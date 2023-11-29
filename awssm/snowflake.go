@@ -12,8 +12,8 @@ import (
 	"github.com/rs/zerolog"
 )
 
-// CreateRDSSecrets creates RDS secrets in AWS Secrets Manager
-func CreateRDSSecrets(secrets []types.RDSSecret, log *zerolog.Logger) error {
+// CreateSnowflakeSecrets creates RDS secrets in AWS Secrets Manager
+func CreateSnowflakeSecrets(secrets []types.SnowflakeSecret, log *zerolog.Logger) error {
 	ctx := context.Background()
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
@@ -23,7 +23,7 @@ func CreateRDSSecrets(secrets []types.RDSSecret, log *zerolog.Logger) error {
 	client := secretsmanager.NewFromConfig(cfg)
 
 	for _, secret := range secrets {
-		// Convert RDSSecretData to JSON string
+		// Convert SnowflakeSecret to JSON string
 		secretValue, err := json.Marshal(secret.Data)
 		if err != nil {
 			log.Error().Err(err).Msg("error marshalling secret data")
@@ -34,8 +34,7 @@ func CreateRDSSecrets(secrets []types.RDSSecret, log *zerolog.Logger) error {
 		tags := map[string]string{
 			"ResourceType": secret.Metadata.ResourceType,
 			"Environment":  secret.Metadata.Environment,
-			"Instance":     secret.Metadata.Instance,
-			"Database":     secret.Metadata.Database,
+			"Warehouse":    secret.Metadata.Warehouse,
 			"Access":       secret.Metadata.Access,
 			"Source":       "secret-hoard",
 		}

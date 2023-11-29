@@ -5,6 +5,10 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/rs/zerolog/log"
+
+	"github.com/natemarks/secret-hoard/awssm"
+	"github.com/natemarks/secret-hoard/csv"
 	"github.com/natemarks/secret-hoard/version"
 	"github.com/rs/zerolog"
 )
@@ -47,5 +51,29 @@ func main() {
 		logger.Fatal().Err(err).Msgf("error getting config: %v", err)
 	}
 	logger.Info().Msgf("parsing file: %v", config.filePath)
+	switch config.secretType {
+	case "rds":
+		secrets, err := csv.ReadRDSSecrets(config.filePath, &logger)
+		if err != nil {
+			logger.Fatal().Err(err).Msgf("error reading RDS secrets from file %s", config.filePath)
+		}
+		err = awssm.CreateRDSSecrets(secrets, &logger)
+		if err != nil {
+			logger.Fatal().Err(err).Msg("error creating RDS secrets")
+		}
+		log.Info().Msg("RDS secrets created successfully")
+	case "snowflake":
+		secrets, err := csv.ReadSnowflakeSecrets(config.filePath, &logger)
+		if err != nil {
+			logger.Fatal().Err(err).Msgf("error reading Snowflake secrets from file %s", config.filePath)
+		}
+		err = awssm.CreateSnowflakeSecrets(secrets, &logger)
+		if err != nil {
+			logger.Fatal().Err(err).Msg("error creating Snowflake secrets")
+		}
+		log.Info().Msg("Snowflake secrets created successfully")
+	default:
+		logger.Fatal().Msgf("invalid secret type: %s", config.secretType)
+	}
 
 }
