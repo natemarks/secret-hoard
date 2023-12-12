@@ -1,8 +1,7 @@
-package csv
+package store
 
 import (
 	"encoding/csv"
-	"os"
 	"strings"
 
 	"github.com/natemarks/secret-hoard/types"
@@ -11,22 +10,26 @@ import (
 
 // ReadSnowflakeSecrets reads a CSV file and returns a slice of Snowflake
 func ReadSnowflakeSecrets(filename string, log *zerolog.Logger) ([]types.SnowflakeSecret, error) {
-	file, err := os.Open(filename)
+	csvContents, err := readFileToString(filename)
 	if err != nil {
-		log.Error().Err(err).Msgf("error opening file %s", filename)
+		log.Error().Err(err).Msgf("error reading store contents from file %s", filename)
 		return nil, err
 	}
-	defer func(file *os.File) {
-		err := file.Close()
-		if err != nil {
-			log.Error().Err(err).Msgf("error closing file %s", filename)
-		}
-	}(file)
+	secrets, err := SnowflakeSecretsFromCSVString(csvContents, log)
+	if err != nil {
+		log.Error().Err(err).Msgf("error converting CSV contents to SnowflakeSecrets")
+		return nil, err
+	}
+	return secrets, nil
+}
 
-	reader := csv.NewReader(file)
+// ReadSnowflakeSecrets reads a CSV file and returns a slice of Snowflake
+func SnowflakeSecretsFromCSVString(csvData string, log *zerolog.Logger) ([]types.SnowflakeSecret, error) {
+
+	reader := csv.NewReader(strings.NewReader(csvData))
 	records, err := reader.ReadAll()
 	if err != nil {
-		log.Error().Err(err).Msgf("error reading file %s", filename)
+		log.Error().Err(err).Msg("error reading store contents string")
 		return nil, err
 	}
 
@@ -58,21 +61,10 @@ func ReadSnowflakeSecrets(filename string, log *zerolog.Logger) ([]types.Snowfla
 	return secrets, nil
 }
 
-// WriteSnowflakeSecrets writes a slice of SnowflakeSecrets to a CSV file
-func WriteSnowflakeSecrets(filename string, secrets []types.SnowflakeSecret, log *zerolog.Logger) error {
-	file, err := os.Create(filename)
-	if err != nil {
-		log.Error().Err(err).Msgf("error creating file %s", filename)
-		return err
-	}
-	defer func(file *os.File) {
-		err := file.Close()
-		if err != nil {
-
-		}
-	}(file)
-
-	writer := csv.NewWriter(file)
+// SnowflakeSecretsToCSvString converts a slice of SnowflakeSecrets to a CSV string
+func SnowflakeSecretsToCSvString(secrets []types.SnowflakeSecret, log *zerolog.Logger) (csvData string, err error) {
+	var csvString strings.Builder
+	writer := csv.NewWriter(&csvString)
 
 	// Write CSV header
 	err = writer.Write([]string{
@@ -80,8 +72,8 @@ func WriteSnowflakeSecrets(filename string, secrets []types.SnowflakeSecret, log
 		"Password", "AccountName", "Username",
 	})
 	if err != nil {
-		log.Error().Err(err).Msgf("error writing header to file %s", filename)
-		return err
+		log.Error().Err(err).Msgf("error writing header")
+		return "", err
 	}
 
 	// Write data rows
@@ -93,16 +85,16 @@ func WriteSnowflakeSecrets(filename string, secrets []types.SnowflakeSecret, log
 			secret.Metadata.Access,
 			secret.Data.Password,
 			secret.Data.AccountName,
-			secret.Data.Warehouse,
 			secret.Data.Username,
 		}
 		err := writer.Write(record)
 		if err != nil {
-			log.Error().Err(err).Msgf("error writing record %v to file %s", record, filename)
-			return err
+			log.Error().Err(err).Msgf("error writing record %v ", record)
+			return "", err
 		}
 	}
 
 	writer.Flush()
-	return writer.Error()
+	csvData = csvString.String()
+	return csvData, writer.Error()
 }

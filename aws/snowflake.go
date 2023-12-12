@@ -1,11 +1,9 @@
-package snowflake
+package aws
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
-
-	aws2 "github.com/natemarks/secret-hoard/aws"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -45,7 +43,7 @@ func CreateSnowflakeSecrets(secrets []types.SnowflakeSecret, log *zerolog.Logger
 		createSecretInput := &secretsmanager.CreateSecretInput{
 			Name:         aws.String(fmt.Sprint(secret.Metadata.SecretID())),
 			SecretString: aws.String(string(secretValue)),
-			Tags:         aws2.ConvertMapToTags(tags),
+			Tags:         ConvertMapToTags(tags),
 		}
 
 		_, err = client.CreateSecret(ctx, createSecretInput)

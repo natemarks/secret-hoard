@@ -11,7 +11,26 @@ The metadata will describe the assets and access granted by the secret so the ca
 
 
 The metadata for a secret should include the environment, assets to which the secrets grants access and an access profile that describes the type of access granted. It DOES NOT include versioning information required to rotate the secret. Rotation will use the internal secret versioning mechanism.
+##  usage
+secret-hoard creates secrets based on the contents of a csv file. The csv file contains the metadata and the secret value.  The columns of the CSV file vary by type: rds, snowflake.  If the overwrite flag is set, the secret will be overwritten if it already exists.  If the overwrite flag is not set, the secret will be created only if it does not already exist.
 
+RDS csv file columns:
+```csv
+ResourceType,Environment,Instance,Database,Access,Password,Engine,Port,DbInstanceIdentifier,Host,Username
+rdspostgres,environment,instance,database,type,password,postgres,5432,dbInstanceIdentifier,host,username
+```
+
+Snowflake csv file columns:
+```csv
+ResourceType,Environment,Warehouse,Access,Password,AccountName,Username
+snowflake,staging,mywarehouse,readonly,mypassword,myaccountname,myusername
+
+```
+
+```bash
+secret-hoard -type [ rds | snowflake ] -file <path to store file> [-overwrite]
+```
+secret-hoard []
 ## metadata examples
 
 ### Read-only access ot a Postgres RDS database

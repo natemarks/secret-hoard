@@ -1,8 +1,7 @@
-package csv
+package store
 
 import (
 	"encoding/csv"
-	"os"
 	"strconv"
 	"strings"
 
@@ -14,22 +13,26 @@ import (
 
 // ReadRDSSecrets reads a CSV file and returns a slice of RDSSecrets
 func ReadRDSSecrets(filename string, log *zerolog.Logger) ([]types.RDSSecret, error) {
-	file, err := os.Open(filename)
+	csvContents, err := readFileToString(filename)
 	if err != nil {
-		log.Error().Err(err).Msgf("error opening file %s", filename)
+		log.Error().Err(err).Msgf("error reading store contents from file %s", filename)
 		return nil, err
 	}
-	defer func(file *os.File) {
-		err := file.Close()
-		if err != nil {
-			log.Error().Err(err).Msgf("error closing file %s", filename)
-		}
-	}(file)
+	secrets, err := RDSSecretsFromCSVString(csvContents, log)
+	if err != nil {
+		log.Error().Err(err).Msgf("error converting CSV contents to RDSSecrets")
+		return nil, err
+	}
+	return secrets, nil
+}
 
-	reader := csv.NewReader(file)
+// RDSSecretsFromCSVString reads string contents in CSV format and returns a slice of RDSSecrets
+func RDSSecretsFromCSVString(csvData string, log *zerolog.Logger) ([]types.RDSSecret, error) {
+
+	reader := csv.NewReader(strings.NewReader(csvData))
 	records, err := reader.ReadAll()
 	if err != nil {
-		log.Error().Err(err).Msgf("error reading file %s", filename)
+		log.Error().Err(err).Msg("error reading store contents string")
 		return nil, err
 	}
 
@@ -76,21 +79,10 @@ func ReadRDSSecrets(filename string, log *zerolog.Logger) ([]types.RDSSecret, er
 	return secrets, nil
 }
 
-// WriteRDSSecrets writes a slice of RDSSecrets to a CSV file
-func WriteRDSSecrets(filename string, secrets []types.RDSSecret, log *zerolog.Logger) error {
-	file, err := os.Create(filename)
-	if err != nil {
-		log.Error().Err(err).Msgf("error creating file %s", filename)
-		return err
-	}
-	defer func(file *os.File) {
-		err := file.Close()
-		if err != nil {
-
-		}
-	}(file)
-
-	writer := csv.NewWriter(file)
+// RDSSecretsToCSVString writes a slice of RDSSecrets to a CSV file
+func RDSSecretsToCSVString(secrets []types.RDSSecret, log *zerolog.Logger) (csvData string, err error) {
+	var csvString strings.Builder
+	writer := csv.NewWriter(&csvString)
 
 	// Write CSV header
 	err = writer.Write([]string{
@@ -98,8 +90,8 @@ func WriteRDSSecrets(filename string, secrets []types.RDSSecret, log *zerolog.Lo
 		"Password", "Engine", "Port", "DbInstanceIdentifier", "Host", "Username",
 	})
 	if err != nil {
-		log.Error().Err(err).Msgf("error writing header to file %s", filename)
-		return err
+		log.Error().Err(err).Msgf("error writing header")
+		return "", err
 	}
 
 	// Write data rows
@@ -119,11 +111,12 @@ func WriteRDSSecrets(filename string, secrets []types.RDSSecret, log *zerolog.Lo
 		}
 		err := writer.Write(record)
 		if err != nil {
-			log.Error().Err(err).Msgf("error writing record %v to file %s", record, filename)
-			return err
+			log.Error().Err(err).Msgf("error writing record %v", record)
+			return "", err
 		}
 	}
 
 	writer.Flush()
-	return writer.Error()
+	csvData = csvString.String()
+	return csvData, writer.Error()
 }

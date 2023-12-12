@@ -7,7 +7,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
-func TestCreateRDSSecrets(t *testing.T) {
+func TestCreateSnowflakeSecrets(t *testing.T) {
 	// skipping to avoid the slow WS interaction while working on other tests
 	t.Skip()
 	if err := CredsOK(); err != nil {
@@ -22,7 +22,7 @@ func TestCreateRDSSecrets(t *testing.T) {
 	t.Logf("setup complete")
 
 	type args struct {
-		secrets []types.RDSSecret
+		secrets []types.SnowflakeSecret
 		log     *zerolog.Logger
 	}
 	tests := []struct {
@@ -31,24 +31,21 @@ func TestCreateRDSSecrets(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "sdfdsf",
+			name: "ggg",
 			args: args{
-				secrets: []types.RDSSecret{
+				secrets: []types.SnowflakeSecret{
 					{
-						Data: types.RDSSecretData{
-							Password:             "password",
-							Engine:               "postgres",
-							Port:                 5432,
-							DbInstanceIdentifier: "dbInstanceIdentifier",
-							Host:                 "host",
-							Username:             "username",
-						},
-						Metadata: types.RDSSecretMetadata{
-							ResourceType: "rdspostgres",
+						Metadata: types.SnowflakeSecretMetadata{
+							ResourceType: "snowflake",
 							Environment:  "testenv",
-							Instance:     "myinstance",
-							Database:     "mydb",
-							Access:       "mytype",
+							Warehouse:    "warehouse",
+							Access:       "read",
+						},
+						Data: types.SnowflakeSecretData{
+							Password:    "mypassword",
+							AccountName: "myaccountname",
+							Warehouse:   "warehouse",
+							Username:    "myusername",
 						},
 					},
 				},
@@ -59,8 +56,8 @@ func TestCreateRDSSecrets(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := CreateRDSSecrets(tt.args.secrets, tt.args.log); (err != nil) != tt.wantErr {
-				t.Errorf("CreateRDSSecrets() error = %v, wantErr %v", err, tt.wantErr)
+			if err := CreateSnowflakeSecrets(tt.args.secrets, tt.args.log); (err != nil) != tt.wantErr {
+				t.Errorf("CreateSnowflakeSecrets() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

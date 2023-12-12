@@ -5,12 +5,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/natemarks/secret-hoard/snowflake"
-
 	"github.com/rs/zerolog/log"
 
 	"github.com/natemarks/secret-hoard/aws"
-	"github.com/natemarks/secret-hoard/csv"
+	"github.com/natemarks/secret-hoard/store"
 	"github.com/natemarks/secret-hoard/version"
 	"github.com/rs/zerolog"
 )
@@ -21,13 +19,15 @@ type config struct {
 	filePath   string
 }
 
-func getConfig() (config config, err error) {
+func getConfig(log *zerolog.Logger) (config config, err error) {
 
 	secretTypePtr := flag.String("type", "", "secret type: rds, snowflake")
-	filePathPtr := flag.String("file", "", "path to csv file")
+	filePathPtr := flag.String("file", "", "path to store file")
 	overwritePtr := flag.Bool("overwrite", false, "overwrite existing secrets")
 	flag.Parse()
-
+	log.Info().Msgf("secret type: %s", *secretTypePtr)
+	log.Info().Msgf("file path: %s", *filePathPtr)
+	log.Info().Msgf("overwrite: %v", *overwritePtr)
 	switch *secretTypePtr {
 	case "rds":
 		config.secretType = "rds"
@@ -48,14 +48,14 @@ func main() {
 
 	zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	logger := zerolog.New(os.Stderr).With().Str("version", version.Version).Timestamp().Logger()
-	config, err := getConfig()
+	config, err := getConfig(&logger)
 	if err != nil {
 		logger.Fatal().Err(err).Msgf("error getting config: %v", err)
 	}
 	logger.Info().Msgf("parsing file: %v", config.filePath)
 	switch config.secretType {
 	case "rds":
-		secrets, err := csv.ReadRDSSecrets(config.filePath, &logger)
+		secrets, err := store.ReadRDSSecrets(config.filePath, &logger)
 		if err != nil {
 			logger.Fatal().Err(err).Msgf("error reading RDS secrets from file %s", config.filePath)
 		}
@@ -65,11 +65,11 @@ func main() {
 		}
 		log.Info().Msg("RDS secrets created successfully")
 	case "snowflake":
-		secrets, err := csv.ReadSnowflakeSecrets(config.filePath, &logger)
+		secrets, err := store.ReadSnowflakeSecrets(config.filePath, &logger)
 		if err != nil {
 			logger.Fatal().Err(err).Msgf("error reading Snowflake secrets from file %s", config.filePath)
 		}
-		err = snowflake.CreateSnowflakeSecrets(secrets, &logger)
+		err = aws.CreateSnowflakeSecrets(secrets, &logger)
 		if err != nil {
 			logger.Fatal().Err(err).Msg("error creating Snowflake secrets")
 		}
