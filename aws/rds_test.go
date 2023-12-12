@@ -1,4 +1,4 @@
-package awssm
+package aws
 
 import (
 	"testing"

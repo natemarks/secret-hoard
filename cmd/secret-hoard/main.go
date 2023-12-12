@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/natemarks/secret-hoard/snowflake"
+
 	"github.com/rs/zerolog/log"
 
-	"github.com/natemarks/secret-hoard/awssm"
+	"github.com/natemarks/secret-hoard/aws"
 	"github.com/natemarks/secret-hoard/csv"
 	"github.com/natemarks/secret-hoard/version"
 	"github.com/rs/zerolog"
@@ -57,7 +59,7 @@ func main() {
 		if err != nil {
 			logger.Fatal().Err(err).Msgf("error reading RDS secrets from file %s", config.filePath)
 		}
-		err = awssm.CreateRDSSecrets(secrets, &logger)
+		err = aws.CreateRDSSecrets(secrets, &logger)
 		if err != nil {
 			logger.Fatal().Err(err).Msg("error creating RDS secrets")
 		}
@@ -67,7 +69,7 @@ func main() {
 		if err != nil {
 			logger.Fatal().Err(err).Msgf("error reading Snowflake secrets from file %s", config.filePath)
 		}
-		err = awssm.CreateSnowflakeSecrets(secrets, &logger)
+		err = snowflake.CreateSnowflakeSecrets(secrets, &logger)
 		if err != nil {
 			logger.Fatal().Err(err).Msg("error creating Snowflake secrets")
 		}

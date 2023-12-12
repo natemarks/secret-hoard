@@ -1,12 +1,12 @@
-package awssm
+package aws
 
 import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	smtypes "github.com/aws/aws-sdk-go-v2/service/secretsmanager/types"
 )
 
-// Convert a map to a list of tags
-func convertMapToTags(tags map[string]string) []smtypes.Tag {
+// ConvertMapToTags Convert a map to a list of tags
+func ConvertMapToTags(tags map[string]string) []smtypes.Tag {
 	var tagList []smtypes.Tag
 	for key, value := range tags {
 		tag := smtypes.Tag{

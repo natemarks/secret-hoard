@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/natemarks/secret-hoard/rds"
+	"github.com/natemarks/secret-hoard/aws"
 
 	"github.com/natemarks/secret-hoard/types"
 	"github.com/rs/zerolog"
@@ -64,7 +64,7 @@ func ReadRDSSecrets(filename string, log *zerolog.Logger) ([]types.RDSSecret, er
 			},
 		}
 		// try to override the endpoint by looking up the RDS instance
-		host, err := rds.GetRDSEndpoint(record[8])
+		host, err := aws.GetRDSEndpoint(record[8])
 		if err != nil {
 			log.Error().Err(err).Msgf("error getting RDS endpoint for %s", record[8])
 		} else {
