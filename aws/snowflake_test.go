@@ -3,11 +3,13 @@ package aws
 import (
 	"testing"
 
+	"github.com/natemarks/secret-hoard/store"
+
 	"github.com/natemarks/secret-hoard/types"
 	"github.com/rs/zerolog"
 )
 
-func TestCreateSnowflakeSecrets(t *testing.T) {
+func TestCreateOrUpdateSnowflakeSecret(t *testing.T) {
 	// skipping to avoid the slow WS interaction while working on other tests
 	t.Skip()
 	if err := CredsOK(); err != nil {
@@ -20,45 +22,82 @@ func TestCreateSnowflakeSecrets(t *testing.T) {
 		t.Fatalf("error setting up test: %s", err)
 	}
 	t.Logf("setup complete")
-
 	type args struct {
-		secrets []types.SnowflakeSecret
-		log     *zerolog.Logger
+		secret    types.SnowflakeSecret
+		overwrite bool
+		log       *zerolog.Logger
 	}
 	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
+		name string
+		args args
 	}{
 		{
-			name: "ggg",
+			name: "first - succeed",
 			args: args{
-				secrets: []types.SnowflakeSecret{
-					{
-						Metadata: types.SnowflakeSecretMetadata{
-							ResourceType: "snowflake",
-							Environment:  "testenv",
-							Warehouse:    "warehouse",
-							Access:       "read",
-						},
-						Data: types.SnowflakeSecretData{
-							Password:    "mypassword",
-							AccountName: "myaccountname",
-							Warehouse:   "warehouse",
-							Username:    "myusername",
-						},
+				secret: types.SnowflakeSecret{
+					Data: types.SnowflakeSecretData{
+						Password:    "password",
+						AccountName: "accountname",
+						Warehouse:   "warehouse",
+						Username:    "username",
+					},
+					Metadata: types.SnowflakeSecretMetadata{
+						ResourceType: "snowflake",
+						Environment:  "testenv",
+						Warehouse:    "warehouse",
+						Access:       "read",
 					},
 				},
-				log: &zerolog.Logger{},
+				overwrite: false,
+				log:       store.GetTestLogger(),
 			},
-			wantErr: false,
+		},
+		{
+			name: "second - succeed",
+			args: args{
+				secret: types.SnowflakeSecret{
+					Data: types.SnowflakeSecretData{
+						Password:    "password",
+						AccountName: "accountname",
+						Warehouse:   "warehouse",
+						Username:    "username",
+					},
+					Metadata: types.SnowflakeSecretMetadata{
+						ResourceType: "snowflake",
+						Environment:  "testenv",
+						Warehouse:    "warehouse",
+						Access:       "read",
+					},
+				},
+				overwrite: true,
+				log:       store.GetTestLogger(),
+			},
+		},
+		{
+			name: "third - fail",
+			args: args{
+				secret: types.SnowflakeSecret{
+					Data: types.SnowflakeSecretData{
+						Password:    "password",
+						AccountName: "accountname",
+						Warehouse:   "warehouse",
+						Username:    "username",
+					},
+					Metadata: types.SnowflakeSecretMetadata{
+						ResourceType: "snowflake",
+						Environment:  "testenv",
+						Warehouse:    "warehouse",
+						Access:       "read",
+					},
+				},
+				overwrite: false,
+				log:       store.GetTestLogger(),
+			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := CreateSnowflakeSecrets(tt.args.secrets, tt.args.log); (err != nil) != tt.wantErr {
-				t.Errorf("CreateSnowflakeSecrets() error = %v, wantErr %v", err, tt.wantErr)
-			}
+			CreateOrUpdateSnowflakeSecret(tt.args.secret, tt.args.overwrite, tt.args.log)
 		})
 	}
 }

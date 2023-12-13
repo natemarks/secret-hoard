@@ -59,9 +59,8 @@ func main() {
 		if err != nil {
 			logger.Fatal().Err(err).Msgf("error reading RDS secrets from file %s", config.filePath)
 		}
-		err = aws.CreateRDSSecrets(secrets, &logger)
-		if err != nil {
-			logger.Fatal().Err(err).Msg("error creating RDS secrets")
+		for _, secret := range secrets {
+			aws.CreateOrUpdateRDSSecret(secret, config.overwrite, &logger)
 		}
 		log.Info().Msg("RDS secrets created successfully")
 	case "snowflake":
@@ -69,9 +68,8 @@ func main() {
 		if err != nil {
 			logger.Fatal().Err(err).Msgf("error reading Snowflake secrets from file %s", config.filePath)
 		}
-		err = aws.CreateSnowflakeSecrets(secrets, &logger)
-		if err != nil {
-			logger.Fatal().Err(err).Msg("error creating Snowflake secrets")
+		for _, secret := range secrets {
+			aws.CreateOrUpdateSnowflakeSecret(secret, config.overwrite, &logger)
 		}
 		log.Info().Msg("Snowflake secrets created successfully")
 	default:

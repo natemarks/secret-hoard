@@ -3,11 +3,13 @@ package aws
 import (
 	"testing"
 
+	"github.com/natemarks/secret-hoard/store"
+
 	"github.com/natemarks/secret-hoard/types"
 	"github.com/rs/zerolog"
 )
 
-func TestCreateRDSSecrets(t *testing.T) {
+func TestCreateOrUpdateSecret(t *testing.T) {
 	// skipping to avoid the slow WS interaction while working on other tests
 	t.Skip()
 	if err := CredsOK(); err != nil {
@@ -20,48 +22,91 @@ func TestCreateRDSSecrets(t *testing.T) {
 		t.Fatalf("error setting up test: %s", err)
 	}
 	t.Logf("setup complete")
-
 	type args struct {
-		secrets []types.RDSSecret
-		log     *zerolog.Logger
+		secret    types.RDSSecret
+		overwrite bool
+		log       *zerolog.Logger
 	}
 	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
+		name string
+		args args
 	}{
 		{
-			name: "sdfdsf",
+			name: "first - succeed",
 			args: args{
-				secrets: []types.RDSSecret{
-					{
-						Data: types.RDSSecretData{
-							Password:             "password",
-							Engine:               "postgres",
-							Port:                 5432,
-							DbInstanceIdentifier: "dbInstanceIdentifier",
-							Host:                 "host",
-							Username:             "username",
-						},
-						Metadata: types.RDSSecretMetadata{
-							ResourceType: "rdspostgres",
-							Environment:  "testenv",
-							Instance:     "myinstance",
-							Database:     "mydb",
-							Access:       "mytype",
-						},
+				secret: types.RDSSecret{
+					Data: types.RDSSecretData{
+						Password:             "password",
+						Engine:               "postgres",
+						Port:                 5432,
+						DbInstanceIdentifier: "dbInstanceIdentifier",
+						Host:                 "host",
+						Username:             "username",
+					},
+					Metadata: types.RDSSecretMetadata{
+						ResourceType: "rdspostgres",
+						Environment:  "testenv",
+						Instance:     "myinstance",
+						Database:     "mydb",
+						Access:       "mytype",
 					},
 				},
-				log: &zerolog.Logger{},
+				overwrite: false,
+				log:       store.GetTestLogger(),
 			},
-			wantErr: false,
+		},
+		{
+			name: "second - succeed",
+			args: args{
+				secret: types.RDSSecret{
+					Data: types.RDSSecretData{
+						Password:             "password",
+						Engine:               "postgres",
+						Port:                 5432,
+						DbInstanceIdentifier: "dbInstanceIdentifier",
+						Host:                 "host",
+						Username:             "username",
+					},
+					Metadata: types.RDSSecretMetadata{
+						ResourceType: "rdspostgres",
+						Environment:  "testenv",
+						Instance:     "myinstance",
+						Database:     "mydb",
+						Access:       "mytype",
+					},
+				},
+				overwrite: true,
+				log:       store.GetTestLogger(),
+			},
+		},
+		{
+			name: "third - fail",
+			args: args{
+				secret: types.RDSSecret{
+					Data: types.RDSSecretData{
+						Password:             "password",
+						Engine:               "postgres",
+						Port:                 5432,
+						DbInstanceIdentifier: "dbInstanceIdentifier",
+						Host:                 "host",
+						Username:             "username",
+					},
+					Metadata: types.RDSSecretMetadata{
+						ResourceType: "rdspostgres",
+						Environment:  "testenv",
+						Instance:     "myinstance",
+						Database:     "mydb",
+						Access:       "mytype",
+					},
+				},
+				overwrite: false,
+				log:       store.GetTestLogger(),
+			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := CreateRDSSecrets(tt.args.secrets, tt.args.log); (err != nil) != tt.wantErr {
-				t.Errorf("CreateRDSSecrets() error = %v, wantErr %v", err, tt.wantErr)
-			}
+			CreateOrUpdateRDSSecret(tt.args.secret, tt.args.overwrite, tt.args.log)
 		})
 	}
 }

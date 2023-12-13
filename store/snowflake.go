@@ -23,7 +23,7 @@ func ReadSnowflakeSecrets(filename string, log *zerolog.Logger) ([]types.Snowfla
 	return secrets, nil
 }
 
-// ReadSnowflakeSecrets reads a CSV file and returns a slice of Snowflake
+// SnowflakeSecretsFromCSVString reads a CSV file and returns a slice of Snowflake
 func SnowflakeSecretsFromCSVString(csvData string, log *zerolog.Logger) ([]types.SnowflakeSecret, error) {
 
 	reader := csv.NewReader(strings.NewReader(csvData))

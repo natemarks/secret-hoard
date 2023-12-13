@@ -76,7 +76,7 @@ func TestRDSSecretsFromCSVString(t *testing.T) {
 			name: "hhh",
 			args: args{
 				csvData: "ResourceType,Environment,Instance,Database,Access,Password,Engine,Port,DbInstanceIdentifier,Host,Username\nrdspostgres,environment,instance,database,type,password,postgres,5432,dbInstanceIdentifier,host,username\n",
-				log:     &zerolog.Logger{},
+				log:     GetTestLogger(),
 			},
 			want: []types.RDSSecret{
 				{
