@@ -39,7 +39,7 @@ release: git-status build
 	mkdir -p release/$(VERSION)
 	@for o in $(GOOS); do \
 	  for a in $(GOARCH); do \
-        tar -C ./build/$(COMMIT)/$${o}/$${a} -czvf release/$(VERSION)/secret-hoard_$(VERSION)_$${o}_$${a}.tar.gz . ; \
+        tar -C ./build/$(COMMIT)/$${o}/$${a} -czvf release/$(COMMIT)/secret-hoard_$(COMMIT)_$${o}_$${a}.tar.gz . ; \
 	  done \
     done ; \
 
