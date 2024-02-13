@@ -1,0 +1,2 @@
+ResourceType,Environment,Warehouse,Access,AccountName,Username,Password
+snowflake,myenvironment,mywarehouse,mytype,myAccountname,myusername,mypassword

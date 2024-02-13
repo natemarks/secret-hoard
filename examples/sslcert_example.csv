@@ -1,0 +1,2 @@
+ResourceType,Environment,CommonName,CertificateFile,PrivateKeyFile
+ssl_certificate,testenv,my.domain.com,examples/certificate.crt,examples/private_key.key

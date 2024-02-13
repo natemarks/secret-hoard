@@ -1,0 +1,2 @@
+ResourceType,Environment,Access,File
+jsondoc,testenv,some_json_access_type,examples/jsondoc_example.json

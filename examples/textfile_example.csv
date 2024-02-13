@@ -1,0 +1,2 @@
+ResourceType,Environment,Access,FilePath
+text_file,testenv,my_file_type,examples/text_file_example.txt

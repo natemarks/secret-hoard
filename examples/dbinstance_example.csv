@@ -1,0 +1,2 @@
+ResourceType,Environment,Instance,Database,Access,Password,Engine,Port,DbInstanceIdentifier,Host,Username
+rdspostgres,testenv,myinstance,mydb,mytype,password,postgres,5432,dbInstanceIdentifier,host,username

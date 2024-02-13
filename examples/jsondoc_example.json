@@ -1,0 +1,19 @@
+{
+  "my_maps": [
+    {
+      "aaa": "AAA",
+      "bbb": "BBB",
+      "ccc": "CCC"
+    },
+    {
+      "ddd": "DDD",
+      "eee": "EEE",
+      "fff": "FFF"
+    },
+    {
+      "ggg": "GGG",
+      "hhh": "HHH",
+      "iii": "III"
+    }
+  ]
+}
