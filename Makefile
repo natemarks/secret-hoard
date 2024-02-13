@@ -36,7 +36,7 @@ build: git-status ${EXECUTABLES}
 	ln -s $(CDIR)/build/$(COMMIT) $(CDIR)/build/current
 
 release: git-status build
-	mkdir -p release/$(VERSION)
+	mkdir -p release/$(COMMIT)
 	@for o in $(GOOS); do \
 	  for a in $(GOARCH); do \
         tar -C ./build/$(COMMIT)/$${o}/$${a} -czvf release/$(COMMIT)/secret-hoard_$(COMMIT)_$${o}_$${a}.tar.gz . ; \
