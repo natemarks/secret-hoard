@@ -176,7 +176,7 @@ func (s Secret) Update(overwrite bool, log *zerolog.Logger) {
 // FromCSVRecord converts a CSV record to a valid Secret
 func FromCSVRecord(record Record, log *zerolog.Logger) (secret Secret, err error) {
 
-	return Secret{
+	secret = Secret{
 		Data: Data{
 			Password:    record.Password,
 			AccountName: record.AccountName,
@@ -189,6 +189,8 @@ func FromCSVRecord(record Record, log *zerolog.Logger) (secret Secret, err error
 			Warehouse:    record.Warehouse,
 			Access:       record.Access,
 		},
-	}, err
+	}
+	log.Debug().Msgf("new secret from CSV: %v", secret.Metadata.SecretID())
+	return secret, err
 
 }

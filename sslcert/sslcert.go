@@ -225,7 +225,7 @@ func FromCSVRecord(record Record, log *zerolog.Logger) (secret Secret, err error
 		return secret, err
 	}
 
-	return Secret{
+	secret = Secret{
 		Data: Data{
 			Certificate:       certificateContents,
 			PrivateKey:        privateKeyContents,
@@ -239,6 +239,7 @@ func FromCSVRecord(record Record, log *zerolog.Logger) (secret Secret, err error
 			Environment:  record.Environment,
 			CommonName:   record.CommonName,
 		},
-	}, err
-
+	}
+	log.Debug().Msgf("new secret from CSV: %v", secret.Metadata.SecretID())
+	return secret, err
 }

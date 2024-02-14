@@ -180,7 +180,7 @@ func FromCSVRecord(record Record, log *zerolog.Logger) (secret Secret, err error
 		return secret, err
 	}
 
-	return Secret{
+	secret = Secret{
 		Data: Data{
 			JSONContents:  contents,
 			JSONSha256Sum: sha256Sum,
@@ -190,6 +190,7 @@ func FromCSVRecord(record Record, log *zerolog.Logger) (secret Secret, err error
 			Environment:  record.Environment,
 			Access:       record.Access,
 		},
-	}, err
-
+	}
+	log.Debug().Msgf("new secret from CSV: %v", secret.Metadata.SecretID())
+	return secret, err
 }

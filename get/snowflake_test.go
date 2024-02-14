@@ -15,7 +15,7 @@ import (
 
 func TestSnowflakeSecret(t *testing.T) {
 	var record = snowflake.Record{
-		ResourceType: "rdspostgres",
+		ResourceType: "snowflake",
 		Environment:  "testenv",
 		Warehouse:    "mywarehouse",
 		Access:       "mytype",
@@ -31,7 +31,7 @@ func TestSnowflakeSecret(t *testing.T) {
 		t.Errorf("FromCSVRecord() error = %v", err)
 	}
 	if secret.Exists(&log) {
-		tools.DeleteSecrets([]string{secret.Metadata.SecretID()})
+		_ = tools.DeleteSecrets([]string{secret.Metadata.SecretID()})
 		t.Logf("waiting 30 seconds for secret deletion: %s", secret.Metadata.SecretID())
 		time.Sleep(30 * time.Second)
 	}
@@ -46,5 +46,5 @@ func TestSnowflakeSecret(t *testing.T) {
 	if err != nil {
 		t.Errorf("DownloadSecret() error = %v", err)
 	}
-	tools.DeleteSecrets([]string{secret.Metadata.SecretID()})
+	_ = tools.DeleteSecrets([]string{secret.Metadata.SecretID()})
 }

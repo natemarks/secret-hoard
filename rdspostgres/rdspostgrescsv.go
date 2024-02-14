@@ -1,4 +1,4 @@
-package dbinstance
+package rdspostgres
 
 import (
 	"strconv"

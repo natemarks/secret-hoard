@@ -9,29 +9,29 @@ There are five different types of secrets that can be created or updated using t
 
 All upload executables iterate through a CSV file and create secrets that don't exist, but leave untouched secrets that do exist. The overwrite flag can be used to update existing secrets.
 
-#### upload dbinstance secrets
-dbinstance secrets grant access to an RDS instance and database.
+#### upload rdspostgres secrets
+rdspostgres secrets grant access to an RDS instance and database.
 
 ```bash
-sh-dbinstance -file=examples/dbinstance_example.csv -debug -overwrite
+sh-rdspostgres -file=examples/rdspostgres_example.csv -debug -overwrite
 ```
 
 This is an example CSV file with a single entry
 ```csv
 ResourceType,Environment,Instance,Database,Access,Password,Engine,Port,DbInstanceIdentifier,Host,Username
-dbinstance,testenv,myinstance,mydb,mytype,password,postgres,5432,dbInstanceIdentifier,host,username
+rdspostgres,testenv,myinstance,mydb,mytype,password,postgres,5432,dbInstanceIdentifier,host,username
 ```
 
 The secret ID will be formed from the metadata
 ```text
 Secret ID Format: [ResourceType]/[Environment]/[Instance]/[Database]/[Access]
-Secret ID Example:  'dbinstance/testenv/myinstance/mydb/mytype'
+Secret ID Example:  'rdspostgres/testenv/myinstance/mydb/mytype'
 ```
 
 The Tags will be set based on the metadata
 ```json
 {
-  "ResourceType": "dbinstance",
+  "ResourceType": "rdspostgres",
   "Environment": "testenv",
   "Instance": "myinstance",
   "Database": "mydb",
@@ -40,7 +40,7 @@ The Tags will be set based on the metadata
 }
 ```
 
-The secret value will contain the information required to access the resource. For a dbinstance, it would contain the host, port, username, password, etc.  in a predictable format so the secret can be used to build a connection string, rotated, etc.
+The secret value will contain the information required to access the resource. For a rdspostgres, it would contain the host, port, username, password, etc.  in a predictable format so the secret can be used to build a connection string, rotated, etc.
 
 ```json
 {
@@ -231,7 +231,7 @@ The secret value will contain the information required recreate the file. The co
 ## download secrets
 The 'sh-get' executable can be used to download any one secret by its secret ID to a given file path. For most secrets sh-get downloads the contents to a single file.
 ```bash
-sh-get -id=dbinstance/testenv/myinstance/mydb/mytype -file=private/dbinstance_testenv_myinstance_mydb_mytype.json -debug
+sh-get -id=rdspostgres/testenv/myinstance/mydb/mytype -file=private/rdspostgres_testenv_myinstance_mydb_mytype.json -debug
 ```
 
 For sslcert secrets, sh-get downloads two files using the given filepath string as a prefix. The files are named with .key and .crt extensions. 

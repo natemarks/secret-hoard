@@ -3,11 +3,11 @@ package main
 import (
 	"strings"
 
-	"github.com/natemarks/secret-hoard/dbinstance"
+	"github.com/natemarks/secret-hoard/rdspostgres"
 	"github.com/natemarks/secret-hoard/tools"
 )
 
-var secrets []dbinstance.Secret
+var secrets []rdspostgres.Secret
 
 func main() {
 	cfg, err := tools.GetConfig()
@@ -16,7 +16,7 @@ func main() {
 	}
 	log := cfg.GetLogger()
 	log.Info().Msgf("config: %+v", cfg)
-	records, err := dbinstance.RecordsFromCSV(cfg.FilePath, &log)
+	records, err := rdspostgres.RecordsFromCSV(cfg.FilePath, &log)
 	if err != nil {
 		log.Fatal().Err(err).Msgf("error reading secrets from file %s", cfg.FilePath)
 	}
@@ -25,7 +25,7 @@ func main() {
 		if strings.ToLower(record.ResourceType) == "resourcetype" {
 			continue
 		}
-		secret, err := dbinstance.FromCSVRecord(record, &log)
+		secret, err := rdspostgres.FromCSVRecord(record, &log)
 		if err != nil {
 			log.Error().Err(err).Msgf("error converting record to secret: %v", record)
 			continue
