@@ -1,15 +1,12 @@
 package get
 
 import (
-	"os"
 	"testing"
 	"time"
 
 	"github.com/natemarks/secret-hoard/sslcert"
 
 	"github.com/natemarks/secret-hoard/tools"
-	"github.com/natemarks/secret-hoard/version"
-	"github.com/rs/zerolog"
 )
 
 func TestSSLCertSecret(t *testing.T) {
@@ -20,10 +17,9 @@ func TestSSLCertSecret(t *testing.T) {
 		CertificateFile: "../examples/certificate.crt",
 		PrivateKeyFile:  "../examples/private_key.key",
 	}
-	// this will creaste two files in the temp directory: sslcert_test.crt and sslcert_test.key
+	// this will create two files in the temp directory: sslcert_test.crt and sslcert_test.key
 	downloadFile := t.TempDir() + "/sslcert_test"
-	log := zerolog.New(os.Stdout).With().Str("version", version.Version).Timestamp().Logger()
-	log = log.Level(zerolog.DebugLevel)
+	log := tools.TestLogger()
 	secret, err := sslcert.FromCSVRecord(record, &log)
 	if err != nil {
 		t.Errorf("FromCSVRecord() error = %v", err)

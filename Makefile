@@ -9,7 +9,7 @@ COMMIT := $(shell git rev-parse HEAD)
 PKG_LIST := $(shell go list ${PKG}/... | grep -v /vendor/)
 GO_FILES := $(shell find . -name '*.go' | grep -v /vendor/)
 CDIR = $(shell pwd)
-EXECUTABLES := sh-get sh-jsondoc sh-rdsinstance sh-snowflake sh-sslcert sh-textfile
+EXECUTABLES := sh-download sh-upload
 GOOS := linux
 GOARCH := amd64
 

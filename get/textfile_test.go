@@ -1,15 +1,12 @@
 package get
 
 import (
-	"os"
 	"testing"
 	"time"
 
 	"github.com/natemarks/secret-hoard/textfile"
 
 	"github.com/natemarks/secret-hoard/tools"
-	"github.com/natemarks/secret-hoard/version"
-	"github.com/rs/zerolog"
 )
 
 func TestTextDocSecret(t *testing.T) {
@@ -20,8 +17,7 @@ func TestTextDocSecret(t *testing.T) {
 		FilePath:     "../examples/text_file_example.txt",
 	}
 	downloadFile := t.TempDir() + "/textfile_test.txt"
-	log := zerolog.New(os.Stdout).With().Str("version", version.Version).Timestamp().Logger()
-	log = log.Level(zerolog.DebugLevel)
+	log := tools.TestLogger()
 	secret, err := textfile.FromCSVRecord(record, &log)
 	if err != nil {
 		t.Errorf("FromCSVRecord() error = %v", err)

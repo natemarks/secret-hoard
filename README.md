@@ -3,17 +3,17 @@
 
 This project is used to create or update AWS secretsmanager secrets. A secret is used to grant a specific 'access' to a specific resource. As an example, an RDS secret might grant read-only access to a specific database in a specific environment.
 
-### secret upload executables
+### sh-upload
 
 There are five different types of secrets that can be created or updated using this project. Each type of secret has a different format and different metadata. Each type hase a unique executable to upload secrets from a csv input file. 
 
-All upload executables iterate through a CSV file and create secrets that don't exist, but leave untouched secrets that do exist. The overwrite flag can be used to update existing secrets.
+sh-upload guesses the type of secret based on the first column of the csv file. The first column is the 'ResourceType' and the value is used to determine which type of secret to create. It processes each of the CSV records and creates or updates the secret in AWS secretsmanager.
 
 #### upload rdspostgres secrets
 rdspostgres secrets grant access to an RDS instance and database.
 
 ```bash
-sh-rdspostgres -file=examples/rdspostgres_example.csv -debug -overwrite
+sh-upload -file=examples/rdspostgres_example.csv -debug -overwrite
 ```
 
 This is an example CSV file with a single entry
@@ -57,7 +57,7 @@ The secret value will contain the information required to access the resource. F
 snowflake secrets grant access to a snowflake.
 
 ```bash
-sh-snowflake -file=examples/snowflake_example.csv -debug -overwrite
+sh-upload -file=examples/snowflake_example.csv -debug -overwrite
 ```
 
 The CSV will look like:
@@ -102,7 +102,7 @@ host, port, username, password, etc.  in a predictable format so the secret can 
 ssl_certificate secrets store the certificate and private key file for a common name. The csv file contains paths to the two files and the secret includes information about the files like sha256sum, expiration date and modulus.
 
 ```bash
-sh-sslcert -file=examples/sslcert_example.csv -debug -overwrite
+sh-upload -file=examples/sslcert_example.csv -debug -overwrite
 ```
 
 The CSV will look like:
@@ -151,7 +151,7 @@ host, port, username, password, etc.  in a predictable format so the secret can 
 jsondoc secrets store a json document and the sha2456sum of the document.
 
 ```bash
-sh-jsondoc -file=examples/jsondoc_example.csv -debug -overwrite
+sh-upload -file=examples/jsondoc_example.csv -debug -overwrite
 ```
 
 The CSV will look like:
@@ -191,7 +191,7 @@ The secret value will contain the information required recreate the file. The co
 textfile secrets store a text file and the sha2456sum of the file.
 
 ```bash
-sh-textfile -file=examples/textfile_example.csv -debug -overwrite
+sh-upload -file=examples/textfile_example.csv -debug -overwrite
 ```
 
 The CSV will look like:
@@ -229,15 +229,15 @@ The secret value will contain the information required recreate the file. The co
 
 
 ## download secrets
-The 'sh-get' executable can be used to download any one secret by its secret ID to a given file path. For most secrets sh-get downloads the contents to a single file.
+The 'sh-download' executable can be used to download any one secret by its secret ID to a given file path. For most secrets sh-download downloads the contents to a single file.
 ```bash
-sh-get -id=rdspostgres/testenv/myinstance/mydb/mytype -file=private/rdspostgres_testenv_myinstance_mydb_mytype.json -debug
+sh-download -id=rdspostgres/testenv/myinstance/mydb/mytype -file=private/rdspostgres_testenv_myinstance_mydb_mytype.json -debug
 ```
 
-For sslcert secrets, sh-get downloads two files using the given filepath string as a prefix. The files are named with .key and .crt extensions. 
+For sslcert secrets, sh-download downloads two files using the given filepath string as a prefix. The files are named with .key and .crt extensions. 
 
 In this example: my_domain.crt and my_domain.key
 ```bash
-sh-get -id=sslcert/testenv/my.domain.com-file=private/my_domain -debug
+sh-download -id=sslcert/testenv/my.domain.com-file=private/my_domain -debug
 ```
 

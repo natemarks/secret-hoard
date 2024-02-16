@@ -1,14 +1,11 @@
 package get
 
 import (
-	"os"
 	"testing"
 	"time"
 
 	"github.com/natemarks/secret-hoard/jsondoc"
 	"github.com/natemarks/secret-hoard/tools"
-	"github.com/natemarks/secret-hoard/version"
-	"github.com/rs/zerolog"
 )
 
 func TestJSONDocSecret(t *testing.T) {
@@ -19,8 +16,7 @@ func TestJSONDocSecret(t *testing.T) {
 		JSONFilePath: "../examples/jsondoc_example.json",
 	}
 	downloadFile := t.TempDir() + "/jsondoc_test.json"
-	log := zerolog.New(os.Stdout).With().Str("version", version.Version).Timestamp().Logger()
-	log = log.Level(zerolog.DebugLevel)
+	log := tools.TestLogger()
 	secret, err := jsondoc.FromCSVRecord(record, &log)
 	if err != nil {
 		t.Errorf("FromCSVRecord() error = %v", err)

@@ -3,7 +3,11 @@ package tools
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
+
+	"github.com/natemarks/secret-hoard/version"
+	"github.com/rs/zerolog"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -25,26 +29,19 @@ func ConvertMapToTags(tags map[string]string) []smtypes.Tag {
 }
 
 // DeleteSecrets deletes the given secrets
-func DeleteSecrets(secretIDs []string) error {
+func DeleteSecrets(secretIDs []string) {
 	ctx := context.Background()
-	cfg, err := config.LoadDefaultConfig(ctx)
-	if err != nil {
-		return err
-	}
+	cfg, _ := config.LoadDefaultConfig(ctx)
 
 	client := secretsmanager.NewFromConfig(cfg)
 
 	for _, secretID := range secretIDs {
-		_, err := client.DeleteSecret(ctx, &secretsmanager.DeleteSecretInput{
+		_, _ = client.DeleteSecret(ctx, &secretsmanager.DeleteSecretInput{
 			SecretId:                   &secretID,
 			ForceDeleteWithoutRecovery: aws.Bool(true),
 		})
-		if err != nil {
-			return err
-		}
-	}
 
-	return nil
+	}
 }
 
 // GetSecretValue retrieves the value of a secret
@@ -85,4 +82,11 @@ func GetResourceTypeFromSecretID(secretID string) (result string, err error) {
 		return "", fmt.Errorf("invalid secret ID: %s", secretID)
 	}
 	return parts[0], nil
+}
+
+func TestLogger() (log zerolog.Logger) {
+	log = zerolog.New(os.Stdout).With().Str("version", version.Version).Timestamp().Logger()
+	log = log.With().Str("aws_account_number", GetAWSAccountNumber()).Logger()
+	log = log.Level(zerolog.DebugLevel)
+	return log
 }

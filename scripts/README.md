@@ -1,5 +1,5 @@
 
-to pack up the contents of the private/ directory into an enctyped tarball file in secure/:
+to pack up the contents of the private/ directory into an encrypted tarball file in secure/:
 ```bash
 bash scripts/secure_private_data.sh
 ```
