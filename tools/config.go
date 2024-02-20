@@ -52,7 +52,7 @@ func (c Config) CSVType() (result string) {
 func GetConfig() (config Config, err error) {
 	// Define flags
 	filePtr := flag.String("file", "", "Path to the file")
-	overwritePtr := flag.Bool("Overwrite", false, "Overwrite the secret value if it exists")
+	overwritePtr := flag.Bool("overwrite", false, "Overwrite the secret value if it exists")
 	debugPtr := flag.Bool("debug", false, "Enable Debug mode")
 
 	// Parse command line arguments
