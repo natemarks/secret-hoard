@@ -34,7 +34,7 @@ func (rm Metadata) Map() map[string]string {
 	return attributes
 }
 
-// SecretID returns the secret id for the rdsSecret
+// SecretID returns the secret id for the secret
 func (rm Metadata) SecretID() string {
 	return fmt.Sprintf("%v/%v/%v/%v", rm.ResourceType, rm.Environment, rm.Warehouse, rm.Access)
 }
@@ -89,7 +89,7 @@ func (s Secret) Exists(log *zerolog.Logger) bool {
 
 // Create the secret in secretsmanager
 func (s Secret) Create(log *zerolog.Logger) {
-	log.Debug().Msgf("creating RDS rdsSecret: %s", s.Metadata.SecretID())
+	log.Debug().Msgf("creating snowflake secret: %s", s.Metadata.SecretID())
 	ctx := context.Background()
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
@@ -108,7 +108,7 @@ func (s Secret) Create(log *zerolog.Logger) {
 	// Convert RDSSecretMetadata to tags
 	tags := s.Metadata.Map()
 
-	// Create the rdsSecret
+	// Create the secret
 	createSecretInput := &secretsmanager.CreateSecretInput{
 		Name:         aws.String(fmt.Sprint(s.Metadata.SecretID())),
 		SecretString: aws.String(string(secretValue)),
@@ -117,13 +117,13 @@ func (s Secret) Create(log *zerolog.Logger) {
 	_, err = client.CreateSecret(ctx, createSecretInput)
 	// If the secret already exists and overwrite is true, update it
 	if err != nil {
-		log.Error().Err(err).Msgf("error creating rdsSecret: %s", *createSecretInput.Name)
+		log.Error().Err(err).Msgf("error creating snowflake secret: %s", *createSecretInput.Name)
 		return
 	}
 	log.Info().Msgf("secret created successfully: %s", *createSecretInput.Name)
 }
 
-// Update the RDS rdsSecret
+// Update the RDS secret
 func (s Secret) Update(overwrite bool, log *zerolog.Logger) {
 	if !overwrite {
 		log.Debug().Msgf("overwrite is false, skipping update for %s", s.Metadata.SecretID())
@@ -147,7 +147,7 @@ func (s Secret) Update(overwrite bool, log *zerolog.Logger) {
 	// Convert RDSSecretMetadata to tags
 	tags := s.Metadata.Map()
 
-	// Create the rdsSecret
+	// Create the secret
 	// Update the secret string value
 	updateSecretInput := &secretsmanager.UpdateSecretInput{
 		SecretId:     aws.String(fmt.Sprint(s.Metadata.SecretID())),
