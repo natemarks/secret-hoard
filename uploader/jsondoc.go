@@ -33,11 +33,9 @@ func (j JSONDocProcessor) Process(cfg tools.Config, log *zerolog.Logger) {
 
 	for _, secret := range secrets {
 		if secret.Exists(log) {
-			log.Debug().Msgf("secret already exists: %s", secret.Metadata.SecretID())
 			secret.Update(cfg.Overwrite, log)
 			continue
 		}
-		log.Debug().Msgf("secret does not exist: %s", secret.Metadata.SecretID())
 		secret.Create(log)
 	}
 }
