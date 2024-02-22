@@ -241,3 +241,9 @@ In this example: my_domain.crt and my_domain.key
 sh-download -id=sslcert/testenv/my.domain.com-file=private/my_domain -debug
 ```
 
+
+## upload gpg files to S3
+
+```bash
+aws s3 sync secure/ s3://my_bucket/secret-hoard/
+```

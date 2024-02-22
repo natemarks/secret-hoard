@@ -63,11 +63,11 @@ lint:  ##  run golint
 fmt: ## run gofmt
 	@go fmt ${PKG_LIST}
 
-gocyclo: # run cyclomatic complexity check
+gocyclo: ## run cyclomatic complexity check
 	go install github.com/fzipp/gocyclo/cmd/gocyclo@latest
 	gocyclo -over 25 .
 
-godeadcode: # unreachable code check
+godeadcode: ## unreachable code check
 	go install golang.org/x/tools/cmd/deadcode@latest
 	deadcode -test github.com/natemarks/secret-hoard/...
 
@@ -88,4 +88,4 @@ git-status: ## require status is clean so we can use undo_edits to put things ba
 		exit 1; \
 	fi
 
-.PHONY: build release static upload vet lint fmt gocyclo goimports test
+.PHONY: build release static vet lint fmt gocyclo goimports test
