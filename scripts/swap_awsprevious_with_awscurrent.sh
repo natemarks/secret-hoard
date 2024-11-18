@@ -11,7 +11,6 @@ AWS_PREVIOUS_ID=$(echo "${secret_versions}" | jq -r '.[] | select(.VersionStages
 echo "PREVIOUS ID: ${AWS_PREVIOUS_ID}"
 AWS_CURRENT_ID=$(echo "${secret_versions}" | jq -r '.[] | select(.VersionStages[] == "AWSCURRENT") | .VersionId')
 echo "CURRENT ID: ${AWS_CURRENT_ID}"
-exit
 aws secretsmanager update-secret-version-stage \
 --secret-id "${secret_name}" \
 --version-stage AWSCURRENT \
