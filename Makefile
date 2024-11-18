@@ -43,6 +43,11 @@ release: git-status build
 	  done \
     done ; \
 
+shellcheck: ## use black to format python files
+	( \
+       git ls-files 'scripts/*.sh' |  xargs shellcheck --format=gcc; \
+    )
+
 test:
 	@go test -v ${PKG_LIST}
 #	@go test -short ${PKG_LIST}
