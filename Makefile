@@ -93,4 +93,10 @@ git-status: ## require status is clean so we can use undo_edits to put things ba
 		exit 1; \
 	fi
 
+download: ## download biometric aware ssl cert tarball
+	bash scripts/download.sh
+
+upload: ## upload biometric aware ssl tarball
+	bash scripts/upload.sh
+
 .PHONY: build release static vet lint fmt gocyclo goimports test
