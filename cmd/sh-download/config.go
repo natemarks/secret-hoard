@@ -41,7 +41,7 @@ func GetConfig() (config Config, err error) {
 	config.SecretID = *secretIDPtr
 	config.Debug = *debugPtr
 
-	if !tools.FileExists(config.FilePath) {
+	if tools.FileExists(config.FilePath) {
 		return config, fmt.Errorf("file already exists: %s", config.FilePath)
 	}
 	return config, nil
