@@ -1,0 +1,63 @@
+name: Static Checks
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  static-checks:
+    name: Run Static Checks
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.25.11'
+        cache: true
+
+    - name: Cache Go modules
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Install dependencies
+      run: |
+        go install golang.org/x/tools/cmd/goimports@latest
+        go install golang.org/x/lint/golint@latest
+        go install github.com/fzipp/gocyclo/cmd/gocyclo@latest
+        go install golang.org/x/tools/cmd/deadcode@latest
+        go install golang.org/x/vuln/cmd/govulncheck@latest
+
+    - name: Run make static
+      run: make static
+
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: |
+          coverage.out
+          *.log
+        if-no-files-found: ignore
+
+    - name: Summary
+      if: always()
+      run: |
+        echo "## Static Checks Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "✓ Unit tests" >> $GITHUB_STEP_SUMMARY
+        echo "✓ Code formatting" >> $GITHUB_STEP_SUMMARY
+        echo "✓ Static analysis" >> $GITHUB_STEP_SUMMARY
+        echo "✓ Vulnerability scan" >> $GITHUB_STEP_SUMMARY

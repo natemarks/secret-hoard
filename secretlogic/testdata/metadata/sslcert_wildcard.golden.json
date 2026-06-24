@@ -1,0 +1,5 @@
+{
+  "commonName": "*.example.com",
+  "environment": "staging",
+  "resourceType": "ssl_certificate"
+}

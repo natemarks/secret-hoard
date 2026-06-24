@@ -1,0 +1,6 @@
+{
+  "access": "readonly",
+  "environment": "prod",
+  "resourceType": "snowflake",
+  "warehouse": "analytics"
+}

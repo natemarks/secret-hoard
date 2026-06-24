@@ -1,0 +1,5 @@
+{
+  "commonName": "api.example.com",
+  "environment": "prod",
+  "resourceType": "ssl_certificate"
+}

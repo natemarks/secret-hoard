@@ -1,0 +1,7 @@
+{
+  "access": "readonly",
+  "database": "myapp",
+  "environment": "dev",
+  "instance": "db1",
+  "resourceType": "rdspostgres"
+}
