@@ -2,6 +2,23 @@
 
 This document provides step-by-step manual tests for the complete workflow with each secret type. All files are managed in `$HOME/.secret-hoard/` by default.
 
+## Important: Auto-Create Feature
+
+**`sh-push` now automatically creates secrets if they don't exist!**
+
+You no longer need to manually create secrets in AWS Console or use `sh-upload` first. The workflow is now:
+
+1. **`sh-generate`** - Generate scaffolding files
+2. **Edit files** - Fill in values
+3. **`sh-push`** - Creates secret with proper tags automatically (or updates if exists)
+
+The push command will:
+- Check if the secret exists in AWS
+- If it doesn't exist: show contents, prompt for confirmation, create with proper tags
+- If it exists: show diff, prompt for confirmation, update
+
+This applies to all five secret types (jsondoc, text_file, ssl_certificate, rdspostgres, snowflake).
+
 ## Prerequisites
 
 1. Build the executables:
@@ -69,31 +86,45 @@ cat > ~/.secret-hoard/jsondoc.test.manual-test-app.contents.json <<'EOF'
 EOF
 ```
 
-### Push to AWS (Create Secret)
+### Push to AWS (Create or Update Secret)
 ```bash
 sh-push -metadata=jsondoc.test.manual-test-app.metadata.json -debug
 ```
 
-**Expected Behavior:**
-- Shows diff comparing local to remote (remote won't exist yet, will show error)
-- If secret doesn't exist, error message should indicate this
-- For first-time creation, you may need to create it via AWS console or CSV upload first
+**Expected Behavior - If Secret Doesn't Exist (First Time):**
+```
+Secret does not exist. Creating new secret: jsondoc/test/manual-test-app
 
-**For existing secret - Expected Output:**
+New secret contents:
+{
+  "JSONContents": "{\"app_name\":\"manual-test-app\",\"version\":\"1.0.0\"...}",
+  "JSONSha256Sum": "abc123..."
+}
+
+Type 'Xr4p' to confirm: 
+```
+
+Type the confirmation string. The secret will be created with proper tags automatically.
+
+**Expected Output After Confirmation:**
+```
+Secret created successfully: jsondoc/test/manual-test-app
+```
+
+**Expected Behavior - If Secret Already Exists (Update):**
 ```
 Comparing local files to remote secret: jsondoc/test/manual-test-app
 
 {
-  "resourceType": "jsondoc",
-  ...
-+ "JSONContents": "{\"app_name\":\"manual-test-app\"...}",
-+ "JSONSha256Sum": "abc123..."
+  "JSONContents": "...",
+- "JSONSha256Sum": "old_hash...",
++ "JSONSha256Sum": "new_hash..."
 }
 
 Type 'Xr4p' to confirm overwrite:
 ```
 
-Type the confirmation string to proceed.
+Type the confirmation string to proceed with update.
 
 ### Pull Secret Back
 
@@ -200,25 +231,31 @@ MAX_CONNECTIONS=100
 EOF
 ```
 
-### Create Secret in AWS First
-Since push requires existing secret, create via CSV or console, or use sh-upload:
+### Push to AWS (Create Secret)
 ```bash
-# Create a CSV for initial upload
-cat > /tmp/textfile_test.csv <<'EOF'
-ResourceType,Environment,Access,FilePath
-text_file,test,config-file,~/.secret-hoard/textfile.test.config-file.contents.txt
-EOF
-
-# Upload using existing tool
-sh-upload -file=/tmp/textfile_test.csv -overwrite
+# Push to create the secret (auto-creates with proper tags)
+sh-push -metadata=textfile.test.config-file.metadata.json
 ```
 
-### Push Update
+**Expected Output:**
+```
+Secret does not exist. Creating new secret: text_file/test/config-file
+
+New secret contents:
+{
+  "Contents": "# Application Configuration\nSERVER_HOST=localhost...",
+  "Sha256Sum": "abc123..."
+}
+
+Type 'Xr4p' to confirm: 
+```
+
+### Push Update (After Modification)
 ```bash
 # Modify the contents
 echo "# Updated configuration" | cat - ~/.secret-hoard/textfile.test.config-file.contents.txt > /tmp/temp && mv /tmp/temp ~/.secret-hoard/textfile.test.config-file.contents.txt
 
-# Push changes
+# Push changes (shows diff and updates)
 sh-push -metadata=textfile.test.config-file.metadata.json
 ```
 
@@ -268,24 +305,30 @@ openssl req -x509 -newkey rsa:2048 -nodes \
   -subj "/CN=test.example.com"
 ```
 
-### Create Secret in AWS First
+### Push to AWS (Create Secret)
 ```bash
-# Create CSV for initial upload
-cat > /tmp/sslcert_test.csv <<'EOF'
-ResourceType,Environment,CommonName,CertificateFile,PrivateKeyFile
-ssl_certificate,test,test.example.com,~/.secret-hoard/sslcert.test.test.example.com.crt,~/.secret-hoard/sslcert.test.test.example.com.key
-EOF
-
-# Expand ~ manually
-cat > /tmp/sslcert_test.csv <<EOF
-ResourceType,Environment,CommonName,CertificateFile,PrivateKeyFile
-ssl_certificate,test,test.example.com,${HOME}/.secret-hoard/sslcert.test.test.example.com.crt,${HOME}/.secret-hoard/sslcert.test.test.example.com.key
-EOF
-
-sh-upload -file=/tmp/sslcert_test.csv -overwrite
+# Push to create the secret (auto-creates with proper tags)
+sh-push -metadata=sslcert.test.test.example.com.metadata.json
 ```
 
-### Pull Secret
+**Expected Output:**
+```
+Secret does not exist. Creating new secret: ssl_certificate/test/test.example.com
+
+New secret contents:
+{
+  "Certificate": "-----BEGIN CERTIFICATE-----\n...",
+  "PrivateKey": "-----BEGIN PRIVATE KEY-----\n...",
+  "ExpirationDate": "2027-06-24T...",
+  "Modulus": "ABC123...",
+  "CertificateSha256": "def456...",
+  "PrivateKeySha256": "ghi789..."
+}
+
+Type 'Xr4p' to confirm: 
+```
+
+### Pull Secret Back to Verify
 ```bash
 # Remove local files first
 rm ~/.secret-hoard/sslcert.test.test.example.com.*
@@ -376,18 +419,30 @@ cat > ~/.secret-hoard/rdspostgres.test.test-db.myapp.readonly.json <<'EOF'
 EOF
 ```
 
-### Create Secret in AWS
+### Push to AWS (Create Secret)
 ```bash
-# Create CSV for initial upload
-cat > /tmp/rdspostgres_test.csv <<'EOF'
-ResourceType,Environment,Instance,Database,Access,Password,Engine,Port,DbInstanceIdentifier,Host,Username
-rdspostgres,test,test-db,myapp,readonly,test_readonly_pass_12345,postgres,5432,test-db-instance,test-db.123456789012.us-east-1.rds.amazonaws.com,readonly_user
-EOF
-
-sh-upload -file=/tmp/rdspostgres_test.csv -overwrite
+# Push to create the secret (auto-creates with proper tags)
+sh-push -metadata=rdspostgres.test.test-db.myapp.readonly.json
 ```
 
-### Pull Secret
+**Expected Output:**
+```
+Secret does not exist. Creating new secret: rdspostgres/test/test-db/myapp/readonly
+
+New secret contents:
+{
+  "password": "test_readonly_pass_12345",
+  "engine": "postgres",
+  "port": 5432,
+  "dbInstanceIdentifier": "test-db-instance",
+  "host": "test-db.123456789012.us-east-1.rds.amazonaws.com",
+  "username": "readonly_user"
+}
+
+Type 'Xr4p' to confirm: 
+```
+
+### Pull Secret Back to Verify
 ```bash
 rm ~/.secret-hoard/rdspostgres.test.test-db.myapp.readonly.json
 sh-pull -type=rdspostgres -env=test -instance=test-db -database=myapp -access=readonly
@@ -454,17 +509,28 @@ cat > ~/.secret-hoard/snowflake.test.analytics.developer.json <<'EOF'
 EOF
 ```
 
-### Create Secret in AWS
+### Push to AWS (Create Secret)
 ```bash
-cat > /tmp/snowflake_test.csv <<'EOF'
-ResourceType,Environment,Warehouse,Access,AccountName,Username,Password
-snowflake,test,analytics,developer,mycompany.us-east-1,dev_user,snowflake_dev_password_123
-EOF
-
-sh-upload -file=/tmp/snowflake_test.csv -overwrite
+# Push to create the secret (auto-creates with proper tags)
+sh-push -metadata=snowflake.test.analytics.developer.json
 ```
 
-### Pull Secret
+**Expected Output:**
+```
+Secret does not exist. Creating new secret: snowflake/test/analytics/developer
+
+New secret contents:
+{
+  "password": "snowflake_dev_password_123",
+  "accountName": "mycompany.us-east-1",
+  "warehouse": "analytics",
+  "username": "dev_user"
+}
+
+Type 'Xr4p' to confirm: 
+```
+
+### Pull Secret Back to Verify
 ```bash
 rm ~/.secret-hoard/snowflake.test.analytics.developer.json
 sh-pull -type=snowflake -env=test -warehouse=analytics -access=developer

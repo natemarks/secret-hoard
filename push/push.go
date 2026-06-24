@@ -96,10 +96,34 @@ func pushJSONDoc(metadataFile string, metadataMap map[string]interface{}, log *z
 	secretID := localSecret.Metadata.SecretID()
 	log.Info().Msgf("Secret ID: %s", secretID)
 
-	// Fetch remote secret
+	// Check if secret exists
+	if !localSecret.Exists(log) {
+		// Secret doesn't exist - create it
+		fmt.Printf("\nSecret does not exist. Creating new secret: %s\n\n", secretID)
+
+		// Show what will be created
+		fmt.Println("New secret contents:")
+		secretJSON, _ := json.MarshalIndent(localSecret.Data, "", "  ")
+		fmt.Println(string(secretJSON))
+		fmt.Println()
+
+		// Prompt for confirmation
+		confirmString := GenerateRandomString(4)
+		if !PromptForConfirmation(confirmString) {
+			fmt.Println("Creation cancelled.")
+			return nil
+		}
+
+		localSecret.Create(log)
+		log.Info().Msgf("Secret created: %s", secretID)
+		fmt.Printf("\nSecret created successfully: %s\n", secretID)
+		return nil
+	}
+
+	// Secret exists - fetch and compare
 	remoteSecretValue, err := tools.GetSecretValue(secretID)
 	if err != nil {
-		return fmt.Errorf("error fetching remote secret (does it exist?): %w", err)
+		return fmt.Errorf("error fetching remote secret: %w", err)
 	}
 
 	var remoteData jsondoc.Data
@@ -176,10 +200,34 @@ func pushTextFile(metadataFile string, metadataMap map[string]interface{}, log *
 	secretID := localSecret.Metadata.SecretID()
 	log.Info().Msgf("Secret ID: %s", secretID)
 
+	// Check if secret exists
+	if !localSecret.Exists(log) {
+		// Secret doesn't exist - create it
+		fmt.Printf("\nSecret does not exist. Creating new secret: %s\n\n", secretID)
+
+		// Show what will be created
+		fmt.Println("New secret contents:")
+		secretJSON, _ := json.MarshalIndent(localSecret.Data, "", "  ")
+		fmt.Println(string(secretJSON))
+		fmt.Println()
+
+		// Prompt for confirmation
+		confirmString := GenerateRandomString(4)
+		if !PromptForConfirmation(confirmString) {
+			fmt.Println("Creation cancelled.")
+			return nil
+		}
+
+		localSecret.Create(log)
+		log.Info().Msgf("Secret created: %s", secretID)
+		fmt.Printf("\nSecret created successfully: %s\n", secretID)
+		return nil
+	}
+
 	// Fetch remote secret
 	remoteSecretValue, err := tools.GetSecretValue(secretID)
 	if err != nil {
-		return fmt.Errorf("error fetching remote secret (does it exist?): %w", err)
+		return fmt.Errorf("error fetching remote secret: %w", err)
 	}
 
 	var remoteData textfile.Data
@@ -292,10 +340,34 @@ func pushSSLCert(metadataFile string, metadataMap map[string]interface{}, log *z
 	secretID := localSecret.Metadata.SecretID()
 	log.Info().Msgf("Secret ID: %s", secretID)
 
+	// Check if secret exists
+	if !localSecret.Exists(log) {
+		// Secret doesn't exist - create it
+		fmt.Printf("\nSecret does not exist. Creating new secret: %s\n\n", secretID)
+
+		// Show what will be created
+		fmt.Println("New secret contents:")
+		secretJSON, _ := json.MarshalIndent(localSecret.Data, "", "  ")
+		fmt.Println(string(secretJSON))
+		fmt.Println()
+
+		// Prompt for confirmation
+		confirmString := GenerateRandomString(4)
+		if !PromptForConfirmation(confirmString) {
+			fmt.Println("Creation cancelled.")
+			return nil
+		}
+
+		localSecret.Create(log)
+		log.Info().Msgf("Secret created: %s", secretID)
+		fmt.Printf("\nSecret created successfully: %s\n", secretID)
+		return nil
+	}
+
 	// Fetch remote secret
 	remoteSecretValue, err := tools.GetSecretValue(secretID)
 	if err != nil {
-		return fmt.Errorf("error fetching remote secret (does it exist?): %w", err)
+		return fmt.Errorf("error fetching remote secret: %w", err)
 	}
 
 	var remoteData sslcert.Data
@@ -360,10 +432,34 @@ func pushRDSPostgres(metadataFile string, metadataMap map[string]interface{}, lo
 	secretID := localSecret.Metadata.SecretID()
 	log.Info().Msgf("Secret ID: %s", secretID)
 
+	// Check if secret exists
+	if !localSecret.Exists(log) {
+		// Secret doesn't exist - create it
+		fmt.Printf("\nSecret does not exist. Creating new secret: %s\n\n", secretID)
+
+		// Show what will be created
+		fmt.Println("New secret contents:")
+		secretJSON, _ := json.MarshalIndent(localSecret.Data, "", "  ")
+		fmt.Println(string(secretJSON))
+		fmt.Println()
+
+		// Prompt for confirmation
+		confirmString := GenerateRandomString(4)
+		if !PromptForConfirmation(confirmString) {
+			fmt.Println("Creation cancelled.")
+			return nil
+		}
+
+		localSecret.Create(log)
+		log.Info().Msgf("Secret created: %s", secretID)
+		fmt.Printf("\nSecret created successfully: %s\n", secretID)
+		return nil
+	}
+
 	// Fetch remote secret
 	remoteSecretValue, err := tools.GetSecretValue(secretID)
 	if err != nil {
-		return fmt.Errorf("error fetching remote secret (does it exist?): %w", err)
+		return fmt.Errorf("error fetching remote secret: %w", err)
 	}
 
 	var remoteData rdspostgres.Data
@@ -428,10 +524,34 @@ func pushSnowflake(metadataFile string, metadataMap map[string]interface{}, log 
 	secretID := localSecret.Metadata.SecretID()
 	log.Info().Msgf("Secret ID: %s", secretID)
 
+	// Check if secret exists
+	if !localSecret.Exists(log) {
+		// Secret doesn't exist - create it
+		fmt.Printf("\nSecret does not exist. Creating new secret: %s\n\n", secretID)
+
+		// Show what will be created
+		fmt.Println("New secret contents:")
+		secretJSON, _ := json.MarshalIndent(localSecret.Data, "", "  ")
+		fmt.Println(string(secretJSON))
+		fmt.Println()
+
+		// Prompt for confirmation
+		confirmString := GenerateRandomString(4)
+		if !PromptForConfirmation(confirmString) {
+			fmt.Println("Creation cancelled.")
+			return nil
+		}
+
+		localSecret.Create(log)
+		log.Info().Msgf("Secret created: %s", secretID)
+		fmt.Printf("\nSecret created successfully: %s\n", secretID)
+		return nil
+	}
+
 	// Fetch remote secret
 	remoteSecretValue, err := tools.GetSecretValue(secretID)
 	if err != nil {
-		return fmt.Errorf("error fetching remote secret (does it exist?): %w", err)
+		return fmt.Errorf("error fetching remote secret: %w", err)
 	}
 
 	var remoteData snowflake.Data
