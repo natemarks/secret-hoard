@@ -166,32 +166,3 @@ func (s Secret) Update(overwrite bool, log *tools.Logger) {
 	log.Info("secret update successfully: %s", *updateSecretInput.SecretId)
 }
 
-// FromCSVRecord converts a CSV record to a valid Secret
-func FromCSVRecord(record Record, log *tools.Logger) (secret Secret, err error) {
-
-	sha256Sum, err := record.Sha256Sum()
-	if err != nil {
-		log.Error("error getting sha256sum")
-		return secret, err
-	}
-	contents, err := record.Contents()
-	if err != nil {
-		log.Error("error getting JSON contents")
-		return secret, err
-	}
-
-	secret = Secret{
-		Data: Data{
-			Contents:  contents,
-			Sha256Sum: sha256Sum,
-		},
-		Metadata: Metadata{
-			ResourceType: record.ResourceType,
-			Environment:  record.Environment,
-			Access:       record.Access,
-		},
-	}
-	log.Debug("new secret from CSV: %v", secret.Metadata.SecretID())
-	return secret, err
-
-}

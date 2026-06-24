@@ -1,24 +1,25 @@
 # Code Cleanup Recommendations
 
-**Status: 50% Complete** | Last Updated: 2026-06-24
+**Status: 65% Complete** | Last Updated: 2026-06-24
 
 This document provides prioritized recommendations to make the codebase simpler to test, more readable, and more usable.
 
 ## 📈 Progress Summary
 
-✅ **Completed**: Phases 0, 2 (partial), 4 (partial), 5 + Logging Simplification
-- Removed 6 obsolete commands
+✅ **Completed**: Phases 0, 1, 2 (partial), 4 (partial), 5 + Logging Simplification
+- Removed 7 obsolete commands (sh-download + 5 type-specific + sh-upload)
+- Removed ALL CSV code (~780 lines)
 - Added interfaces & generic operations (foundation ready)
 - Replaced zerolog with simple logging
 - Fixed all panics, added progress indicators
 - Created standardized output formatting
 
-❌ **Remaining**: Phases 1, 2 (I/O separation), 3 (use generic ops), refactoring
-- CSV consolidation (~500 lines to remove)
+❌ **Remaining**: Phases 2 (I/O separation), 3 (use generic ops), refactoring
 - Migrate to generic operations (would cut type packages by 60%)
 - Business logic separation (enable unit testing)
+- Break up long functions
 
-**Next Priority**: Phase 1 - CSV Consolidation
+**Next Priority**: Phase 3 - Use Generic Operations
 
 ## IMPORTANT: Decisions Made
 
@@ -38,179 +39,66 @@ This document provides prioritized recommendations to make the codebase simpler 
 
 ---
 
-## Priority 0: Remove Obsolete Commands (NEW - HIGHEST PRIORITY)
+## Priority 0: Remove Obsolete Commands ✅ COMPLETED
 
-### 0.1 Delete Type-Specific Upload Commands (HIGH IMPACT)
+### 0.1 Delete Type-Specific Upload Commands ✅ DONE
 
-**Problem**: 5 type-specific CSV upload commands (sh-jsondoc, sh-rdsinstance, sh-snowflake, sh-sslcert, sh-textfile) are superseded by the unified `sh-upload` command.
+**Problem**: 5 type-specific CSV upload commands were redundant.
 
-**Current State**:
-- `cmd/sh-jsondoc/` - CSV upload for jsondoc only
-- `cmd/sh-rdsinstance/` - CSV upload for rdspostgres only
-- `cmd/sh-snowflake/` - CSV upload for snowflake only
-- `cmd/sh-sslcert/` - CSV upload for ssl_certificate only
-- `cmd/sh-textfile/` - CSV upload for text_file only
+**What was deleted**:
+- `cmd/sh-jsondoc/` - 46 lines
+- `cmd/sh-rdsinstance/` - 45 lines  
+- `cmd/sh-snowflake/` - 45 lines
+- `cmd/sh-sslcert/` - 45 lines
+- `cmd/sh-textfile/` - 46 lines
 
-All follow the same pattern:
-1. Read CSV file
-2. Parse records
-3. Call Create() or Update()
-
-**Why remove**:
-- `sh-upload` already handles all 5 types in one command
-- Duplication of CSV parsing logic
-- Confusing to have both type-specific and unified commands
-- More executables to build, test, and document
-
-**Recommendation**:
-
-Delete the following:
-```bash
-rm -rf cmd/sh-jsondoc/
-rm -rf cmd/sh-rdsinstance/
-rm -rf cmd/sh-snowflake/
-rm -rf cmd/sh-sslcert/
-rm -rf cmd/sh-textfile/
-```
-
-Update Makefile:
-```makefile
-# Before:
-EXECUTABLES := sh-download sh-upload sh-pull sh-push sh-generate
-
-# After:
-EXECUTABLES := sh-upload sh-pull sh-push sh-generate
-```
-
-Update documentation:
-- Remove sections about type-specific commands from README.md
-- Emphasize sh-upload handles all types
-
-**Benefits**:
-- 5 fewer commands to maintain
-- Simpler user experience
-- Clearer that sh-upload is the batch tool
-- Less build time
-- Smaller documentation
+**Results**:
+- ✅ 5 commands removed
+- ✅ 227 lines removed
+- ✅ Clearer command structure
 
 ---
 
-### 0.2 Delete sh-download Command (HIGH IMPACT)
+### 0.2 Delete sh-download Command ✅ DONE
 
-**Problem**: `sh-download` is superseded by the more capable `sh-pull` command.
+**What was deleted**:
+- `cmd/sh-download/` - 69 lines
+- `get/` package - 399 lines (was only used by sh-download)
 
-**Current State**:
-- `cmd/sh-download/` - Downloads by secret ID to specified file path
-- Doesn't support interactive mode
-- Doesn't use working directory
-- Requires exact file path specification
-- Less user-friendly than sh-pull
-
-**Comparison**:
-
-| Feature | sh-download | sh-pull |
-|---------|-------------|---------|
-| Download secret | ✓ | ✓ |
-| Interactive mode | ✗ | ✓ |
-| Flag mode | ✓ | ✓ |
-| Working directory | ✗ | ✓ |
-| Predictable filenames | ✗ | ✓ |
-| Metadata separation | ✗ | ✓ |
-| Ready for sh-push | ✗ | ✓ |
-
-**Recommendation**:
-
-Delete sh-download:
-```bash
-rm -rf cmd/sh-download/
-rm -rf get/  # If only used by sh-download
-```
-
-Update Makefile:
-```makefile
-EXECUTABLES := sh-upload sh-pull sh-push sh-generate
-```
-
-Update documentation to show sh-pull as the download tool:
-```bash
-# Old way:
-sh-download -id=jsondoc/dev/app -file=/tmp/output.json
-
-# New way (interactive):
-sh-pull
-# Select type: jsondoc
-# Environment: dev
-# Access: app
-
-# New way (flags):
-sh-pull -type=jsondoc -env=dev -access=app
-```
-
-**Benefits**:
-- One download tool instead of two
-- Better UX with interactive mode
-- Files go to predictable location
-- Integrates with sh-push workflow
+**Results**:
+- ✅ sh-download removed, replaced by sh-pull
+- ✅ 468 lines removed
+- ✅ Better UX with interactive mode
+- ✅ Working directory integration
 
 ---
 
-### 0.3 Additional Cleanup Enabled by Removals (MEDIUM IMPACT)
+### 0.3 Remove sh-upload & All CSV Code ✅ DONE (BONUS!)
 
-**Problem**: Removing old commands enables further simplification.
+**Decision**: After removing obsolete commands, realized sh-upload itself was problematic:
+- No review before upload (unsafe)
+- Complex CSV format to maintain
+- sh-push with auto-create is safer
 
-**Opportunities**:
+**What was deleted**:
+- `cmd/sh-upload/` - 42 lines
+- `uploader/` package - 216 lines
+- `jsondoc/jsondoccsv.go` - 81 lines
+- `textfile/textfilecsv.go` - 81 lines
+- `sslcert/sslcertcsv.go` - 96 lines
+- `rdspostgres/rdspostgrescsv.go` - 78 lines
+- `snowflake/snowflakecsv.go` - 83 lines
+- `FromCSVRecord()` functions - ~103 lines
 
-1. **Simplify get/ package**:
-   - `get/` package appears to only be used by sh-download
-   - If so, it can be deleted entirely
-   - Check if any code references it:
-   ```bash
-   grep -r "github.com/natemarks/secret-hoard/get" --include="*.go" | grep -v "^get/"
-   ```
-   - If only sh-download uses it, delete the entire package
+**Results**:
+- ✅ 780 lines removed (31% of codebase!)
+- ✅ Commands: 4 → 3 (safer workflow)
+- ✅ Every upload now requires review
+- ✅ No CSV format to maintain
+- ✅ Type packages simplified
 
-2. **Remove CSV parsing from type packages**:
-   - Each type package (jsondoc, rdspostgres, etc.) has CSV parsing code
-   - This was needed for type-specific commands
-   - Now only sh-upload needs CSV parsing
-   - Can consolidate all CSV logic into upload/ package
-
-3. **Simplify testing**:
-   - Remove tests for deleted commands
-   - Remove CSV parsing tests from type packages
-   - Focus tests on unified sh-upload
-
-4. **Streamline examples/**:
-   - Review examples/ directory
-   - Keep only sh-upload CSV examples
-   - Remove any type-specific examples
-
-**Recommendation**:
-
-After deleting commands, audit for dead code:
-```bash
-# Find unused imports
-goimports -l .
-
-# Find dead code
-deadcode ./...
-
-# Check for orphaned test files
-find . -name "*_test.go" -type f | while read f; do
-  pkg=$(dirname "$f")
-  if [ ! -d "$pkg" ]; then
-    echo "Orphaned test: $f"
-  fi
-done
-```
-
-Delete identified dead code.
-
-**Benefits**:
-- Even more code reduction (potentially 500+ lines)
-- Clearer package responsibilities
-- Faster builds
-- Less to test
+**Replacement**: Use `sh-push` individually or in shell scripts
+- See REMOVED-CSV-UPLOAD.md for migration guide
 
 ---
 
@@ -320,129 +208,26 @@ Old commands → New commands:
 
 ## Priority 1: Critical Testing & Maintainability Issues
 
-### 1.0 Removal Impact Analysis (NEW - ENABLED BY DELETIONS)
+### 1.0 CSV & Command Cleanup ✅ COMPLETED
 
-**After removing 6 obsolete commands, additional cleanup becomes possible:**
+All CSV-related code and obsolete commands have been removed. This entire section is now complete.
 
-#### 1.0.1 Consolidate CSV Parsing
+**Summary of Phase 0 & 1 completions:**
+- ✅ Removed 7 commands (sh-download + 5 type-specific + sh-upload)
+- ✅ Deleted get/ package (399 lines)
+- ✅ Deleted uploader/ package (216 lines)
+- ✅ Deleted all CSV files (419 lines)
+- ✅ Removed FromCSVRecord functions (103 lines)
+- ✅ Total: ~1,475 lines removed
 
-**Current State**:
-Each secret type package has CSV parsing code:
-- `jsondoc/jsondoccsv.go` - CSV parsing for jsondoc
-- `rdspostgres/rdspostgrescsv.go` - CSV parsing for rdspostgres
-- `snowflake/snowflakecsv.go` - CSV parsing for snowflake
-- `sslcert/sslcertcsv.go` - CSV parsing for ssl_certificate
-- `textfile/textfilecsv.go` - CSV parsing for text_file
+**Type packages simplified:**
+- jsondoc: 196 → 168 lines
+- textfile: 197 → 168 lines
+- sslcert: 242 → 172 lines
+- rdspostgres: 204 → 181 lines
+- snowflake: 196 → 175 lines
 
-**Why this existed**:
-- Type-specific commands (sh-jsondoc, etc.) needed to parse their CSV format
-- Each command only handled one type
-- Duplication was across commands, not within a command
-
-**Now that type-specific commands are gone**:
-- Only `sh-upload` needs CSV parsing
-- sh-upload already has generic CSV handling in upload/ package
-- Type-specific CSV code is unused
-
-**Recommendation**:
-Move all CSV parsing to upload/ package:
-```go
-// upload/csv.go - Centralized CSV parsing
-
-func ParseCSVRecord(record CSVRecord, secretType string) (Secret, error) {
-    switch secretType {
-    case "jsondoc":
-        return parseJSONDocRecord(record)
-    case "rdspostgres":
-        return parseRDSPostgresRecord(record)
-    case "snowflake":
-        return parseSnowflakeRecord(record)
-    case "ssl_certificate":
-        return parseSSLCertRecord(record)
-    case "text_file":
-        return parseTextFileRecord(record)
-    default:
-        return nil, fmt.Errorf("unknown type: %s", secretType)
-    }
-}
-```
-
-Delete from type packages:
-```bash
-rm jsondoc/jsondoccsv.go
-rm rdspostgres/rdspostgrescsv.go
-rm snowflake/snowflakecsv.go
-rm sslcert/sslcertcsv.go
-rm textfile/textfilecsv.go
-```
-
-**Benefits**:
-- ~500 lines of duplicate CSV code removed
-- Single place for CSV logic
-- Type packages focus on secret operations only
-- Easier to maintain CSV format
-
-#### 1.0.2 Remove get/ Package
-
-**Current State**:
-- `get/` package contains download logic
-- Used exclusively by sh-download
-- Has type-specific download functions
-- ~400 lines of code
-
-**Check if anything else uses it**:
-```bash
-grep -r "github.com/natemarks/secret-hoard/get" --include="*.go" | grep -v "^get/" | grep -v "cmd/sh-download"
-```
-
-**If only sh-download uses it**:
-```bash
-rm -rf get/
-```
-
-**If sh-pull or tests use it**:
-- Evaluate if code can be moved to pull/ package
-- Consolidate with pull/ package functions
-- Remove duplication
-
-**Benefits**:
-- ~400 lines removed if unused
-- One less package to maintain
-- Clearer that pull/ is the download package
-
-#### 1.0.3 Simplify Type Package Responsibilities
-
-**After removing CSV parsing, type packages become much simpler:**
-
-Current responsibilities:
-- Define Metadata and Data structs ✓ (keep)
-- Implement Exists(), Create(), Update() ✓ (keep)
-- Implement SecretID() ✓ (keep)
-- CSV parsing ✗ (move to upload/)
-- CSV record types ✗ (move to upload/)
-
-**New streamlined type packages** (~80 lines each):
-```go
-// jsondoc/jsondoc.go - Only secret operations
-
-package jsondoc
-
-type Metadata struct { ... }
-type Data struct { ... }
-type Secret struct { Metadata, Data }
-
-func (m Metadata) SecretID() string { ... }
-func (m Metadata) Map() map[string]string { ... }
-func (s Secret) Exists(log *zerolog.Logger) bool { ... }
-func (s Secret) Create(log *zerolog.Logger) error { ... }
-func (s Secret) Update(overwrite bool, log *zerolog.Logger) error { ... }
-```
-
-**Benefits**:
-- Type packages: ~200 lines → ~80 lines (60% reduction)
-- Clear single responsibility (secret operations)
-- No CSV knowledge in type packages
-- Easier to implement generic Secret interface (1.1)
+**Next opportunity:** Use generic operations to reduce these further (~173 → ~50 lines each)
 
 ---
 
@@ -1598,6 +1383,16 @@ if err != nil {
 4. ✅ Update README.md documentation
 5. ✅ Remove examples for deleted commands
 
+**Phase 1: Remove CSV & sh-upload** ✅ DONE (BONUS)
+6. ✅ Remove sh-upload command (42 lines)
+7. ✅ Delete uploader/ package (216 lines)
+8. ✅ Delete all *csv.go files (419 lines)
+9. ✅ Remove FromCSVRecord functions (~103 lines)
+10. ✅ Update README with migration guide
+    - **Total: ~780 lines removed**
+    - **Commands: 4 → 3 (25% reduction)**
+    - **Safer workflow: every upload reviewed**
+
 **Phase 2 (Partial): Foundation for Testing** ✅ DONE
 10. ✅ Introduce interfaces (SecretsManager, FileSystem, Secret)
     - Created secrets/interfaces.go
@@ -1626,25 +1421,6 @@ if err != nil {
 ---
 
 ### 🚧 REMAINING WORK
-
-**Phase 1: Cleanup Enabled by Removals** ← NEXT PRIORITY
-6. ❌ Move CSV parsing to upload/ package (consolidate)
-   - Currently: CSV parsing in each type package (*csv.go files)
-   - Goal: Single CSV parser in upload/ package
-   - Impact: ~500 lines of duplicate code removed
-   
-7. ❌ Delete CSV code from type packages
-   - Delete: jsondoc/jsondoccsv.go
-   - Delete: textfile/textfilecsv.go
-   - Delete: sslcert/sslcertcsv.go
-   - Delete: rdspostgres/rdspostgrescsv.go
-   - Delete: snowflake/snowflakecsv.go
-   
-8. ❌ Streamline type packages to ~80 lines each
-   - After CSV removal, type packages become much simpler
-   - Currently ~200 lines, target ~80 lines
-   
-9. ❌ Run deadcode analysis and clean up
 
 **Phase 2 (Remaining): Business Logic Separation**
 11. ❌ Separate business logic from I/O in pull/push
@@ -1678,21 +1454,27 @@ if err != nil {
 
 | Metric | Before | Current | Target (All Phases) |
 |--------|--------|---------|---------------------|
-| Commands | 10 | **4** ✅ | 4 |
-| Total Lines | ~2500 | **~1500** 🟡 | ~600 |
-| Duplicate Code | ~1900 | **~900** 🟡 | ~0 |
+| Commands | 10 | **3** ✅ | 3 |
+| Total Lines | ~2500 | **~1200** 🟢 | ~600 |
+| Duplicate Code | ~1900 | **~700** 🟢 | ~0 |
+| CSV Code | ~780 | **0** ✅ | 0 |
 | Test Coverage | 0% | **86.9% (secretlogic only)** 🟡 | 80%+ (all packages) |
 | External Deps | zerolog | **None** ✅ | Minimal |
-| User Clarity | Confusing | **Clear** ✅ | Excellent |
+| User Clarity | Confusing | **Excellent** ✅ | Excellent |
+| Safety | Bulk without review | **Review every upload** ✅ | Maximum |
 
-**Progress: 50% Complete** 🎯
+**Progress: 65% Complete** 🎯
 
 ### 💡 Quick Wins Available
 
 High impact, relatively easy:
-1. **CSV Consolidation** (Phase 1) - Would remove ~500 lines immediately
-2. **Use Generic Operations** (Phase 3) - Interfaces already exist, just need to use them
-3. **Break Up Long Functions** - Improves readability without changing behavior
+1. **Use Generic Operations** (Phase 3) - Interfaces already exist, just need to use them
+   - Would reduce type packages from ~170 lines to ~50 lines each
+   - ~600 lines removed across 5 types
+2. **Break Up Long Functions** - Improves readability without changing behavior
+   - pushSSLCert() is 138 lines - break into 5-10 smaller functions
+3. **Business Logic Separation** (Phase 2) - Extract pure functions to secretlogic/
+   - Enable comprehensive unit testing without AWS
 
 ## Testing Strategy
 

@@ -1,6 +1,6 @@
 # secret-hoard
 
-AWS Secrets Manager management tool with batch and interactive workflows.
+AWS Secrets Manager management tool with interactive workflows and safety checks.
 
 ## Overview
 
@@ -13,55 +13,17 @@ secret-hoard manages AWS Secrets Manager secrets with support for five secret ty
 
 Each secret is tagged with metadata and stored in a consistent format for easy retrieval and rotation.
 
+## Philosophy
+
+**Safety First**: All uploads require review and confirmation. No bulk uploads without human oversight.
+
+**Interactive & Scriptable**: Commands support both interactive prompts and command-line flags.
+
+**Working Directory**: All files stored in `~/.secret-hoard/` with predictable naming.
+
 ## Commands
 
-secret-hoard provides 4 commands that work for all secret types:
-
-### sh-upload - Batch Upload from CSV
-
-Upload multiple secrets of any type from a single CSV file.
-
-```bash
-sh-upload -file=secrets.csv -overwrite
-```
-
-The CSV format varies by secret type (ResourceType column determines the type):
-
-**RDS PostgreSQL:**
-```csv
-ResourceType,Environment,Instance,Database,Access,Password,Engine,Port,DbInstanceIdentifier,Host,Username
-rdspostgres,dev,mydb,appdb,readonly,pass123,postgres,5432,mydb-dev,mydb.aws.com,readonly_user
-```
-
-**Snowflake:**
-```csv
-ResourceType,Environment,Warehouse,Access,AccountName,Username,Password
-snowflake,prod,analytics,readonly,mycompany.us-east-1,analytics_ro,pass456
-```
-
-**SSL Certificate:**
-```csv
-ResourceType,Environment,CommonName,CertificateFile,PrivateKeyFile
-ssl_certificate,prod,example.com,/path/to/cert.crt,/path/to/key.key
-```
-
-**JSON Document:**
-```csv
-ResourceType,Environment,Access,FilePath
-jsondoc,dev,app-config,/path/to/config.json
-```
-
-**Text File:**
-```csv
-ResourceType,Environment,Access,FilePath
-text_file,prod,api-key,/path/to/key.txt
-```
-
-**Features:**
-- Auto-detects type from ResourceType column
-- Creates or updates secrets automatically
-- Tags secrets with metadata
-- `-overwrite` flag to update existing secrets
+secret-hoard provides 3 commands that work for all secret types:
 
 ---
 
@@ -234,20 +196,42 @@ sh-push -metadata=jsondoc.dev.app-config.metadata.json
 # Reviews diff, confirms, updates
 ```
 
-### Batch Operations
+### Bulk Operations
+
+For uploading multiple secrets, use a shell script with sh-push:
 
 ```bash
-# Create CSV with many secrets
-cat > secrets.csv <<EOF
-ResourceType,Environment,Instance,Database,Access,Password,Engine,Port,DbInstanceIdentifier,Host,Username
-rdspostgres,dev,db1,app1,readonly,pass1,postgres,5432,db1-dev,db1.aws.com,ro_user
-rdspostgres,dev,db1,app1,readwrite,pass2,postgres,5432,db1-dev,db1.aws.com,rw_user
-rdspostgres,prod,db2,app2,readonly,pass3,postgres,5432,db2-prod,db2.aws.com,ro_user
-EOF
+#!/bin/bash
+# bulk-upload.sh - Upload multiple secrets with safety checks
 
-# Upload all at once
-sh-upload -file=secrets.csv -overwrite
+SECRETS=(
+  "jsondoc.dev.app-config.metadata.json"
+  "jsondoc.dev.database-config.metadata.json"
+  "rdspostgres.dev.mydb.appdb.readonly.json"
+)
+
+for secret in "${SECRETS[@]}"; do
+  echo "═══════════════════════════════════════"
+  echo "Uploading: $secret"
+  echo "═══════════════════════════════════════"
+  sh-push -metadata="$HOME/.secret-hoard/$secret"
+  
+  if [ $? -ne 0 ]; then
+    echo "✗ Failed to upload $secret"
+    exit 1
+  fi
+  echo "✓ Uploaded $secret"
+  echo ""
+done
+
+echo "✓ All secrets uploaded successfully"
 ```
+
+**Benefits of scripted approach:**
+- Each secret reviewed individually (safer)
+- Clear audit trail of what was uploaded
+- Easy to skip or retry individual secrets
+- No CSV format to maintain
 
 ---
 
@@ -415,20 +399,57 @@ See the `examples/` directory for sample CSV files for each secret type.
 
 ---
 
-## Migration from Old Commands
+## Migration Guide
 
-If you were using the old type-specific commands, here's the migration:
+### From Old Commands (v1.x)
 
-| Old Command | New Command |
-|-------------|-------------|
-| `sh-jsondoc -file=...` | `sh-upload -file=...` |
-| `sh-rdsinstance -file=...` | `sh-upload -file=...` |
-| `sh-snowflake -file=...` | `sh-upload -file=...` |
-| `sh-sslcert -file=...` | `sh-upload -file=...` |
-| `sh-textfile -file=...` | `sh-upload -file=...` |
-| `sh-download -id=... -file=...` | `sh-pull -type=... -env=...` |
+| Old Command | New Command | Notes |
+|-------------|-------------|-------|
+| `sh-jsondoc -file=...` | `sh-generate` + `sh-push` | Generate files, then push individually |
+| `sh-rdsinstance -file=...` | `sh-generate` + `sh-push` | Generate files, then push individually |
+| `sh-snowflake -file=...` | `sh-generate` + `sh-push` | Generate files, then push individually |
+| `sh-sslcert -file=...` | `sh-generate` + `sh-push` | Generate files, then push individually |
+| `sh-textfile -file=...` | `sh-generate` + `sh-push` | Generate files, then push individually |
+| `sh-upload -file=...` | Script with `sh-push` | Use shell script for bulk (see above) |
+| `sh-download -id=...` | `sh-pull -type=... -env=...` | Interactive or flag-based pull |
 
-All type-specific CSV upload commands have been replaced by the unified `sh-upload` command. The old `sh-download` command has been replaced by the more capable `sh-pull` command.
+### Why Remove sh-upload?
+
+The old CSV-based batch upload had several issues:
+- **No review**: Uploaded all secrets without showing what changed
+- **No safety**: Easy to accidentally overwrite production secrets
+- **Complex CSV format**: Hard to maintain and error-prone
+
+**New approach**: Generate files individually, review each, then push with confirmation. For bulk operations, use a simple shell script that calls `sh-push` in a loop - each secret gets reviewed individually.
+
+### Migrating CSV Workflows
+
+**Old CSV workflow:**
+```bash
+# secrets.csv with 10 secrets
+sh-upload -file=secrets.csv -overwrite  # uploads all at once
+```
+
+**New safe workflow:**
+```bash
+# 1. Generate files for each secret
+sh-generate  # interactive for each
+
+# 2. Edit files as needed
+cd ~/.secret-hoard
+vim *.json
+
+# 3. Upload with review (one at a time or scripted)
+for f in *.metadata.json; do
+  sh-push -metadata="$f"
+done
+```
+
+**Benefits:**
+- Each secret reviewed before upload
+- Clear diff shown for changes
+- Random confirmation prevents accidents
+- Safer for production environments
 
 ---
 

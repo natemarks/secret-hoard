@@ -173,24 +173,3 @@ func (s Secret) Update(overwrite bool, log *tools.Logger) {
 	log.Info("secret update successfully: %s", *updateSecretInput.SecretId)
 }
 
-// FromCSVRecord converts a CSV record to a valid Secret
-func FromCSVRecord(record Record, log *tools.Logger) (secret Secret, err error) {
-
-	secret = Secret{
-		Data: Data{
-			Password:    record.Password,
-			AccountName: record.AccountName,
-			Warehouse:   record.Warehouse,
-			Username:    record.Username,
-		},
-		Metadata: Metadata{
-			ResourceType: record.ResourceType,
-			Environment:  record.Environment,
-			Warehouse:    record.Warehouse,
-			Access:       record.Access,
-		},
-	}
-	log.Debug("new secret from CSV: %v", secret.Metadata.SecretID())
-	return secret, err
-
-}
