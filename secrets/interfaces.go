@@ -6,8 +6,8 @@ import (
 	"github.com/natemarks/secret-hoard/tools"
 )
 
-// SecretsManager abstracts AWS Secrets Manager operations for testing
-type SecretsManager interface {
+// Manager abstracts AWS Secrets Manager operations for testing
+type Manager interface {
 	// DescribeSecret checks if a secret exists
 	DescribeSecret(ctx context.Context, secretID string) (bool, error)
 
@@ -63,6 +63,7 @@ type Secret interface {
 // SecretType represents a type of secret
 type SecretType string
 
+// Valid secret type constants
 const (
 	TypeJSONDoc     SecretType = "jsondoc"
 	TypeTextField   SecretType = "text_file"
@@ -70,24 +71,3 @@ const (
 	TypeRDSPostgres SecretType = "rdspostgres"
 	TypeSnowflake   SecretType = "snowflake"
 )
-
-// ValidSecretTypes returns all valid secret types
-func ValidSecretTypes() []SecretType {
-	return []SecretType{
-		TypeJSONDoc,
-		TypeTextField,
-		TypeSSLCert,
-		TypeRDSPostgres,
-		TypeSnowflake,
-	}
-}
-
-// ValidSecretTypeStrings returns valid secret types as strings
-func ValidSecretTypeStrings() []string {
-	types := ValidSecretTypes()
-	result := make([]string, len(types))
-	for i, t := range types {
-		result[i] = string(t)
-	}
-	return result
-}

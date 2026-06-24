@@ -13,8 +13,8 @@ import (
 	"github.com/natemarks/secret-hoard/tools"
 )
 
-// PullMetadata contains the metadata needed to pull a secret
-type PullMetadata struct {
+// Metadata contains the metadata needed to pull a secret
+type Metadata struct {
 	Type       string
 	Env        string
 	Access     string
@@ -24,8 +24,8 @@ type PullMetadata struct {
 	CommonName string
 }
 
-// PullSecret downloads a secret and creates local editable files
-func PullSecret(meta PullMetadata, log *tools.Logger) error {
+// Secret downloads a secret and creates local editable files
+func Secret(meta Metadata, log *tools.Logger) error {
 	switch meta.Type {
 	case "jsondoc":
 		return pullJSONDoc(meta, log)
@@ -42,7 +42,7 @@ func PullSecret(meta PullMetadata, log *tools.Logger) error {
 	}
 }
 
-func pullJSONDoc(meta PullMetadata, log *tools.Logger) error {
+func pullJSONDoc(meta Metadata, log *tools.Logger) error {
 	secretID := fmt.Sprintf("jsondoc/%s/%s", meta.Env, meta.Access)
 	log.Info("Pulling secret: %s", secretID)
 
@@ -109,7 +109,7 @@ func pullJSONDoc(meta PullMetadata, log *tools.Logger) error {
 	return nil
 }
 
-func pullTextFile(meta PullMetadata, log *tools.Logger) error {
+func pullTextFile(meta Metadata, log *tools.Logger) error {
 	secretID := fmt.Sprintf("text_file/%s/%s", meta.Env, meta.Access)
 	log.Info("Pulling secret: %s", secretID)
 
@@ -176,7 +176,7 @@ func pullTextFile(meta PullMetadata, log *tools.Logger) error {
 	return nil
 }
 
-func pullSSLCert(meta PullMetadata, log *tools.Logger) error {
+func pullSSLCert(meta Metadata, log *tools.Logger) error {
 	secretID := fmt.Sprintf("ssl_certificate/%s/%s", meta.Env, meta.CommonName)
 	log.Info("Pulling secret: %s", secretID)
 
@@ -260,7 +260,7 @@ func pullSSLCert(meta PullMetadata, log *tools.Logger) error {
 	return nil
 }
 
-func pullRDSPostgres(meta PullMetadata, log *tools.Logger) error {
+func pullRDSPostgres(meta Metadata, log *tools.Logger) error {
 	secretID := fmt.Sprintf("rdspostgres/%s/%s/%s/%s", meta.Env, meta.Instance, meta.Database, meta.Access)
 	log.Info("Pulling secret: %s", secretID)
 
@@ -316,7 +316,7 @@ func pullRDSPostgres(meta PullMetadata, log *tools.Logger) error {
 	return nil
 }
 
-func pullSnowflake(meta PullMetadata, log *tools.Logger) error {
+func pullSnowflake(meta Metadata, log *tools.Logger) error {
 	secretID := fmt.Sprintf("snowflake/%s/%s/%s", meta.Env, meta.Warehouse, meta.Access)
 	log.Info("Pulling secret: %s", secretID)
 

@@ -9,8 +9,8 @@ import (
 
 const placeholder = tools.PlaceholderValue
 
-// GenerateSecretFiles creates local file scaffolding for a new secret
-func GenerateSecretFiles(log *tools.Logger) error {
+// SecretFiles creates local file scaffolding for a new secret
+func SecretFiles(log *tools.Logger) error {
 	secretTypes := []string{"rdspostgres", "snowflake", "ssl_certificate", "jsondoc", "text_file"}
 	typeIndex := PromptForChoice("Select secret type:", secretTypes)
 	secretType := secretTypes[typeIndex]

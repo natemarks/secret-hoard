@@ -12,7 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager/types"
 )
 
-// AWSSecretsManager implements SecretsManager using AWS SDK
+// AWSSecretsManager implements Manager using AWS SDK
 type AWSSecretsManager struct {
 	client *secretsmanager.Client
 }

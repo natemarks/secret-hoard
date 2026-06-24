@@ -155,9 +155,9 @@ func (c Config) GetLogger() *tools.Logger {
 	return tools.NewLogger(c.Debug)
 }
 
-// ToPullMetadata converts Config to pull.PullMetadata
-func (c Config) ToPullMetadata() pull.PullMetadata {
-	return pull.PullMetadata{
+// ToPullMetadata converts Config to pull.Metadata
+func (c Config) ToPullMetadata() pull.Metadata {
+	return pull.Metadata{
 		Type:       c.Type,
 		Env:        c.Env,
 		Access:     c.Access,

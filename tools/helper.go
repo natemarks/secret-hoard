@@ -3,42 +3,10 @@ package tools
 import (
 	"context"
 	"fmt"
-	"strings"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
-	smtypes "github.com/aws/aws-sdk-go-v2/service/secretsmanager/types"
 )
-
-// ConvertMapToTags Convert a map to a list of tags
-func ConvertMapToTags(tags map[string]string) []smtypes.Tag {
-	var tagList []smtypes.Tag
-	for key, value := range tags {
-		tag := smtypes.Tag{
-			Key:   aws.String(key),
-			Value: aws.String(value),
-		}
-		tagList = append(tagList, tag)
-	}
-	return tagList
-}
-
-// DeleteSecrets deletes the given secrets
-func DeleteSecrets(secretIDs []string) {
-	ctx := context.Background()
-	cfg, _ := config.LoadDefaultConfig(ctx)
-
-	client := secretsmanager.NewFromConfig(cfg)
-
-	for _, secretID := range secretIDs {
-		_, _ = client.DeleteSecret(ctx, &secretsmanager.DeleteSecretInput{
-			SecretId:                   &secretID,
-			ForceDeleteWithoutRecovery: aws.Bool(true),
-		})
-
-	}
-}
 
 // GetSecretValue retrieves the value of a secret
 func GetSecretValue(secretID string) (string, error) {
@@ -69,13 +37,4 @@ func GetSecretValue(secretID string) (string, error) {
 
 	// Return the secret value
 	return *result.SecretString, nil
-}
-
-// GetResourceTypeFromSecretID returns the resource type from a secret ID
-func GetResourceTypeFromSecretID(secretID string) (result string, err error) {
-	parts := strings.Split(secretID, "/")
-	if len(parts) < 3 {
-		return "", fmt.Errorf("invalid secret ID: %s", secretID)
-	}
-	return parts[0], nil
 }

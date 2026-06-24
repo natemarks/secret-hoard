@@ -18,8 +18,8 @@ import (
 	"github.com/natemarks/secret-hoard/tools"
 )
 
-// PushSecret uploads a secret from local files after showing diff and requiring confirmation
-func PushSecret(metadataFile string, log *tools.Logger) error {
+// Secret uploads a secret from local files after showing diff and requiring confirmation
+func Secret(metadataFile string, log *tools.Logger) error {
 	// Read metadata file
 	metadataJSON, err := tools.ReadFileToString(metadataFile)
 	if err != nil {

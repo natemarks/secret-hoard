@@ -17,9 +17,9 @@ func main() {
 	log := cfg.GetLogger()
 	log.Debug("config: %+v", cfg)
 
-	err = push.PushSecret(cfg.MetadataFile, log)
+	err = push.Secret(cfg.MetadataFile, log)
 	if err != nil {
-		log.Error("PushSecret() error: %v", err)
+		log.Error("Secret() error: %v", err)
 		os.Exit(1)
 	}
 }

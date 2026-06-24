@@ -1,7 +1,6 @@
 package tools
 
 import (
-	"io"
 	"log"
 	"os"
 )
@@ -21,16 +20,6 @@ func NewLogger(debugMode bool) *Logger {
 		info:    log.New(os.Stdout, "", 0), // No prefix for info
 		error:   log.New(os.Stderr, "ERROR: ", log.Ldate|log.Ltime),
 		isDebug: debugMode,
-	}
-}
-
-// NewQuietLogger creates a logger that outputs nothing
-func NewQuietLogger() *Logger {
-	return &Logger{
-		debug:   log.New(io.Discard, "", 0),
-		info:    log.New(io.Discard, "", 0),
-		error:   log.New(io.Discard, "", 0),
-		isDebug: false,
 	}
 }
 

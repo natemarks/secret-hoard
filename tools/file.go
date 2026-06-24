@@ -2,12 +2,10 @@ package tools
 
 import (
 	"crypto/sha256"
-	"encoding/csv"
 	"encoding/hex"
 	"fmt"
 	"io"
 	"os"
-	"strings"
 )
 
 // FileExists checks if a file exists
@@ -62,22 +60,6 @@ func GetSHA256Sum(filePath string) (string, error) {
 	hashInBytes := hash.Sum(nil)
 	sha256sum := hex.EncodeToString(hashInBytes)
 	return sha256sum, nil
-}
-
-// GetCSVRecordsFromFile reads a CSV file and returns a slice of string slices
-// This will include the header row which can be identified by the first element
-// (record[0]) being "ResourceType"
-func GetCSVRecordsFromFile(csvFile string) (records [][]string, err error) {
-	csvContents, err := ReadFileToString(csvFile)
-	if err != nil {
-		return nil, err
-	}
-	reader := csv.NewReader(strings.NewReader(csvContents))
-	records, err = reader.ReadAll()
-	if err != nil {
-		return nil, err
-	}
-	return records, nil
 }
 
 // CheckSha256Sum checks if the SHA256 sum of a file matches the expected value
