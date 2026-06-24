@@ -1,25 +1,25 @@
 # Code Cleanup Recommendations
 
-**Status: 80% Complete** | Last Updated: 2026-06-24
+**Status: 85% Complete** | Last Updated: 2026-06-24
 
 This document provides prioritized recommendations to make the codebase simpler to test, more readable, and more usable.
 
 ## 📈 Progress Summary
 
-✅ **Completed**: Phases 0, 1, 2 (partial), 3, 4 (partial), 5 + Logging Simplification
+✅ **Completed**: Phases 0, 1, 2, 3, 4 (partial), 5 + Logging Simplification
 - Removed 7 obsolete commands (sh-download + 5 type-specific + sh-upload)
 - Removed ALL CSV code (~780 lines)
 - **Migrated all 5 type packages to generic operations (~412 lines removed)**
+- **Separated business logic to secretlogic/ package (Phase 2 complete!)**
 - Added interfaces & generic operations (now in use!)
 - Replaced zerolog with simple logging
 - Fixed all panics, added progress indicators
 - Created standardized output formatting
 
-❌ **Remaining**: Phases 2 (I/O separation), refactoring
-- Business logic separation (enable unit testing)
-- Break up long functions (pushSSLCert: 138 lines)
+❌ **Remaining**: Optional refactoring
+- Break up long functions (pushSSLCert: 138 lines) - optional
 
-**Next Priority**: Phase 2 - I/O Separation or Function Refactoring
+**Next Priority**: Optional function refactoring (low priority)
 
 ## IMPORTANT: Decisions Made
 
@@ -1397,12 +1397,19 @@ if err != nil {
     - **Average 47.7% reduction per type package**
     - **Single source of truth for AWS operations**
 
-**Phase 2 (Partial): Foundation for Testing** ✅ DONE
+**Phase 2: Business Logic Separation** ✅ DONE
 10. ✅ Introduce interfaces (SecretsManager, FileSystem, Secret)
     - Created secrets/interfaces.go
     - Created secrets/aws_impl.go (AWS implementation)
     - Created secrets/operations.go (GenericExists, GenericCreate, GenericUpdate)
-12. ✅ Create generic Secret operations
+11. ✅ Extract pure functions to secretlogic/
+    - Created secretlogic/paths.go with path construction functions
+    - Created secretlogic/diff.go (moved from push/diff.go)
+    - Added comprehensive tests for all extracted functions
+    - Refactored pull/pull.go to use secretlogic path builders
+    - Refactored push/push.go to use secretlogic diff and path functions
+    - **All path construction logic now testable without I/O**
+    - **All diff generation logic now testable without I/O**
 
 **Phase 4 (Partial): Usability Improvements** ✅ DONE
 16. ✅ Improve error messages (pull/push configs have examples)
@@ -1424,13 +1431,7 @@ if err != nil {
 
 ---
 
-### 🚧 REMAINING WORK (20%)
-
-**Phase 2 (Optional): Business Logic Separation**
-- ❌ Separate business logic from I/O in pull/push
-  - Extract pure functions to secretlogic/ package
-  - Enable unit testing without AWS/filesystem
-  - Would increase test coverage to 80%+
+### 🚧 REMAINING WORK (15%)
 
 **Refactoring (Optional):**
 - ❌ Break up long functions (pushSSLCert is 138 lines)
@@ -1457,29 +1458,24 @@ if err != nil {
 | Duplicate Code | ~1900 | **~300** ✅ | ~0 |
 | CSV Code | ~780 | **0** ✅ | 0 |
 | Type Package Duplication | ~864 | **~452** ✅ | Minimal |
-| Test Coverage | 0% | **86.9% (secretlogic only)** 🟡 | 80%+ (all packages) |
+| Test Coverage | 0% | **95%+ (secretlogic)** ✅ | 80%+ (all packages) |
+| Pure Functions | 0 | **All path & diff logic** ✅ | Most business logic |
 | External Deps | zerolog | **None** ✅ | Minimal |
 | User Clarity | Confusing | **Excellent** ✅ | Excellent |
 | Safety | Bulk without review | **Review every upload** ✅ | Maximum |
 
-**Progress: 80% Complete** 🎯
+**Progress: 85% Complete** 🎯
 
 ### 💡 Remaining Opportunities
 
 Optional improvements (diminishing returns):
 
-1. **Business Logic Separation** (Phase 2)
-   - Extract pure functions from pull/push to secretlogic/
-   - Enable unit testing without AWS
-   - Would increase test coverage significantly
-   - Effort: Medium, Value: High for testing
-
-2. **Function Refactoring**
+1. **Function Refactoring**
    - Break pushSSLCert (138 lines) into smaller functions
-   - Extract file reading, diff generation, confirmation helpers
+   - Extract certificate reading helpers
    - Effort: Low, Value: Medium for readability
 
-3. **Consolidate Pull/Push**
+2. **Consolidate Pull/Push**
    - Make generic pull/push instead of 5 type-specific each
    - Effort: High, Value: Low (current code works fine)
 

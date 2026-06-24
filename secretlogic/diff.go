@@ -1,4 +1,4 @@
-package push
+package secretlogic
 
 import (
 	"encoding/json"

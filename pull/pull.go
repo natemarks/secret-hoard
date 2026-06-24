@@ -6,6 +6,7 @@ import (
 
 	"github.com/natemarks/secret-hoard/jsondoc"
 	"github.com/natemarks/secret-hoard/rdspostgres"
+	"github.com/natemarks/secret-hoard/secretlogic"
 	"github.com/natemarks/secret-hoard/snowflake"
 	"github.com/natemarks/secret-hoard/sslcert"
 	"github.com/natemarks/secret-hoard/textfile"
@@ -66,8 +67,10 @@ func pullJSONDoc(meta PullMetadata, log *tools.Logger) error {
 		return fmt.Errorf("error parsing secret: %w", err)
 	}
 
+	// Build file paths
+	metadataFile, contentsFile := secretlogic.BuildJSONDocPaths(workingDir, meta.Env, meta.Access)
+
 	// Create metadata file
-	metadataFile := fmt.Sprintf("%s/jsondoc.%s.%s.metadata.json", workingDir, meta.Env, meta.Access)
 	metadataContent := map[string]string{
 		"resourceType":  "jsondoc",
 		"environment":   meta.Env,
@@ -86,7 +89,6 @@ func pullJSONDoc(meta PullMetadata, log *tools.Logger) error {
 	}
 
 	// Create contents file
-	contentsFile := fmt.Sprintf("%s/jsondoc.%s.%s.contents.json", workingDir, meta.Env, meta.Access)
 	err = tools.WriteStringToFile(data.JSONContents, contentsFile)
 	if err != nil {
 		return fmt.Errorf("error writing contents file: %w", err)
@@ -132,8 +134,10 @@ func pullTextFile(meta PullMetadata, log *tools.Logger) error {
 		return fmt.Errorf("error parsing secret: %w", err)
 	}
 
+	// Build file paths
+	metadataFile, contentsFile := secretlogic.BuildTextFilePaths(workingDir, meta.Env, meta.Access)
+
 	// Create metadata file
-	metadataFile := fmt.Sprintf("%s/textfile.%s.%s.metadata.json", workingDir, meta.Env, meta.Access)
 	metadataContent := map[string]string{
 		"resourceType": "text_file",
 		"environment":  meta.Env,
@@ -152,7 +156,6 @@ func pullTextFile(meta PullMetadata, log *tools.Logger) error {
 	}
 
 	// Create contents file
-	contentsFile := fmt.Sprintf("%s/textfile.%s.%s.contents.txt", workingDir, meta.Env, meta.Access)
 	err = tools.WriteStringToFile(data.Contents, contentsFile)
 	if err != nil {
 		return fmt.Errorf("error writing contents file: %w", err)
@@ -198,8 +201,10 @@ func pullSSLCert(meta PullMetadata, log *tools.Logger) error {
 		return fmt.Errorf("error parsing secret: %w", err)
 	}
 
+	// Build file paths
+	metadataFile, certFile, keyFile := secretlogic.BuildSSLCertPaths(workingDir, meta.Env, meta.CommonName)
+
 	// Create metadata file with all computed fields
-	metadataFile := fmt.Sprintf("%s/sslcert.%s.%s.metadata.json", workingDir, meta.Env, meta.CommonName)
 	metadataContent := map[string]string{
 		"resourceType":      "ssl_certificate",
 		"environment":       meta.Env,
@@ -221,7 +226,6 @@ func pullSSLCert(meta PullMetadata, log *tools.Logger) error {
 	}
 
 	// Create certificate file
-	certFile := fmt.Sprintf("%s/sslcert.%s.%s.crt", workingDir, meta.Env, meta.CommonName)
 	err = tools.WriteStringToFile(data.Certificate, certFile)
 	if err != nil {
 		return fmt.Errorf("error writing certificate file: %w", err)
@@ -235,7 +239,6 @@ func pullSSLCert(meta PullMetadata, log *tools.Logger) error {
 	}
 
 	// Create private key file
-	keyFile := fmt.Sprintf("%s/sslcert.%s.%s.key", workingDir, meta.Env, meta.CommonName)
 	err = tools.WriteStringToFile(data.PrivateKey, keyFile)
 	if err != nil {
 		return fmt.Errorf("error writing key file: %w", err)
@@ -282,8 +285,8 @@ func pullRDSPostgres(meta PullMetadata, log *tools.Logger) error {
 		return fmt.Errorf("error parsing secret: %w", err)
 	}
 
-	// Create single file with metadata and data
-	filename := fmt.Sprintf("%s/rdspostgres.%s.%s.%s.%s.json", workingDir, meta.Env, meta.Instance, meta.Database, meta.Access)
+	// Build file path
+	filename := secretlogic.BuildRDSPostgresPath(workingDir, meta.Env, meta.Instance, meta.Database, meta.Access)
 
 	fileContent := map[string]interface{}{
 		"metadata": map[string]string{
@@ -338,8 +341,8 @@ func pullSnowflake(meta PullMetadata, log *tools.Logger) error {
 		return fmt.Errorf("error parsing secret: %w", err)
 	}
 
-	// Create single file with metadata and data
-	filename := fmt.Sprintf("%s/snowflake.%s.%s.%s.json", workingDir, meta.Env, meta.Warehouse, meta.Access)
+	// Build file path
+	filename := secretlogic.BuildSnowflakePath(workingDir, meta.Env, meta.Warehouse, meta.Access)
 
 	fileContent := map[string]interface{}{
 		"metadata": map[string]string{

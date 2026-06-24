@@ -7,12 +7,12 @@ import (
 	"encoding/pem"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/natemarks/secret-hoard/jsondoc"
 	"github.com/natemarks/secret-hoard/rdspostgres"
+	"github.com/natemarks/secret-hoard/secretlogic"
 	"github.com/natemarks/secret-hoard/snowflake"
 	"github.com/natemarks/secret-hoard/sslcert"
 	"github.com/natemarks/secret-hoard/textfile"
@@ -64,7 +64,7 @@ func pushJSONDoc(metadataFile string, metadataMap map[string]interface{}, log *t
 	access := metadataMap["access"].(string)
 
 	// Build file paths
-	baseName := strings.TrimSuffix(metadataFile, ".metadata.json")
+	baseName := secretlogic.GetBaseName(metadataFile)
 	contentsFile := baseName + ".contents.json"
 
 	// Read contents file
@@ -141,14 +141,14 @@ func pushJSONDoc(metadataFile string, metadataMap map[string]interface{}, log *t
 
 	// Check if secrets are equal
 	fmt.Println("Comparing local and remote versions...")
-	if SecretsAreEqual(localSecret.Data, remoteSecret.Data) {
+	if secretlogic.SecretsAreEqual(localSecret.Data, remoteSecret.Data) {
 		fmt.Println("✓ Local and remote secrets are identical. No update needed.")
 		return nil
 	}
 
 	// Generate and display diff
 	fmt.Printf("\nChanges detected in secret: %s\n\n", secretID)
-	diff := GenerateJSONDiff(localSecret.Data, remoteSecret.Data)
+	diff := secretlogic.GenerateJSONDiff(localSecret.Data, remoteSecret.Data)
 	fmt.Println(diff)
 
 	// Prompt for confirmation
@@ -249,14 +249,14 @@ func pushTextFile(metadataFile string, metadataMap map[string]interface{}, log *
 
 	// Check if secrets are equal
 	fmt.Println("Comparing local and remote versions...")
-	if SecretsAreEqual(localSecret.Data, remoteSecret.Data) {
+	if secretlogic.SecretsAreEqual(localSecret.Data, remoteSecret.Data) {
 		fmt.Println("✓ Local and remote secrets are identical. No update needed.")
 		return nil
 	}
 
 	// Generate and display diff
 	fmt.Printf("\nChanges detected in secret: %s\n\n", secretID)
-	diff := GenerateJSONDiff(localSecret.Data, remoteSecret.Data)
+	diff := secretlogic.GenerateJSONDiff(localSecret.Data, remoteSecret.Data)
 	fmt.Println(diff)
 
 	// Prompt for confirmation
@@ -393,14 +393,14 @@ func pushSSLCert(metadataFile string, metadataMap map[string]interface{}, log *t
 
 	// Check if secrets are equal
 	fmt.Println("Comparing local and remote versions...")
-	if SecretsAreEqual(localSecret.Data, remoteSecret.Data) {
+	if secretlogic.SecretsAreEqual(localSecret.Data, remoteSecret.Data) {
 		fmt.Println("✓ Local and remote secrets are identical. No update needed.")
 		return nil
 	}
 
 	// Generate and display diff
 	fmt.Printf("\nChanges detected in secret: %s\n\n", secretID)
-	diff := GenerateJSONDiff(localSecret.Data, remoteSecret.Data)
+	diff := secretlogic.GenerateJSONDiff(localSecret.Data, remoteSecret.Data)
 	fmt.Println(diff)
 
 	// Prompt for confirmation
@@ -489,14 +489,14 @@ func pushRDSPostgres(metadataFile string, metadataMap map[string]interface{}, lo
 
 	// Check if secrets are equal
 	fmt.Println("Comparing local and remote versions...")
-	if SecretsAreEqual(localSecret.Data, remoteSecret.Data) {
+	if secretlogic.SecretsAreEqual(localSecret.Data, remoteSecret.Data) {
 		fmt.Println("✓ Local and remote secrets are identical. No update needed.")
 		return nil
 	}
 
 	// Generate and display diff
 	fmt.Printf("\nChanges detected in secret: %s\n\n", secretID)
-	diff := GenerateJSONDiff(localSecret.Data, remoteSecret.Data)
+	diff := secretlogic.GenerateJSONDiff(localSecret.Data, remoteSecret.Data)
 	fmt.Println(diff)
 
 	// Prompt for confirmation
@@ -585,14 +585,14 @@ func pushSnowflake(metadataFile string, metadataMap map[string]interface{}, log 
 
 	// Check if secrets are equal
 	fmt.Println("Comparing local and remote versions...")
-	if SecretsAreEqual(localSecret.Data, remoteSecret.Data) {
+	if secretlogic.SecretsAreEqual(localSecret.Data, remoteSecret.Data) {
 		fmt.Println("✓ Local and remote secrets are identical. No update needed.")
 		return nil
 	}
 
 	// Generate and display diff
 	fmt.Printf("\nChanges detected in secret: %s\n\n", secretID)
-	diff := GenerateJSONDiff(localSecret.Data, remoteSecret.Data)
+	diff := secretlogic.GenerateJSONDiff(localSecret.Data, remoteSecret.Data)
 	fmt.Println(diff)
 
 	// Prompt for confirmation
@@ -680,8 +680,3 @@ func extractPrivateKeyModulus(keyFile string) (string, error) {
 	return rsaPrivateKey.N.String(), nil
 }
 
-// GetBaseName extracts the base name from a metadata file path
-func GetBaseName(metadataFile string) string {
-	base := filepath.Base(metadataFile)
-	return strings.TrimSuffix(base, ".metadata.json")
-}
