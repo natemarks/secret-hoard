@@ -54,6 +54,7 @@ func pullJSONDoc(meta PullMetadata, log *zerolog.Logger) error {
 	log.Debug().Msgf("Using working directory: %s", workingDir)
 
 	// Fetch secret from AWS
+	fmt.Printf("Fetching secret from AWS: %s\n", secretID)
 	secretValue, err := tools.GetSecretValue(secretID)
 	if err != nil {
 		return fmt.Errorf("error fetching secret: %w", err)
@@ -100,7 +101,7 @@ func pullJSONDoc(meta PullMetadata, log *zerolog.Logger) error {
 	}
 
 	log.Info().Msgf("Created files: %s, %s", metadataFile, contentsFile)
-	fmt.Printf("Successfully pulled secret: %s\n", secretID)
+	fmt.Printf("✓ Successfully pulled secret: %s\n", secretID)
 	fmt.Printf("  - %s\n", metadataFile)
 	fmt.Printf("  - %s\n", contentsFile)
 
@@ -119,6 +120,7 @@ func pullTextFile(meta PullMetadata, log *zerolog.Logger) error {
 	log.Debug().Msgf("Using working directory: %s", workingDir)
 
 	// Fetch secret from AWS
+	fmt.Printf("Fetching secret from AWS: %s\n", secretID)
 	secretValue, err := tools.GetSecretValue(secretID)
 	if err != nil {
 		return fmt.Errorf("error fetching secret: %w", err)
@@ -165,7 +167,7 @@ func pullTextFile(meta PullMetadata, log *zerolog.Logger) error {
 	}
 
 	log.Info().Msgf("Created files: %s, %s", metadataFile, contentsFile)
-	fmt.Printf("Successfully pulled secret: %s\n", secretID)
+	fmt.Printf("✓ Successfully pulled secret: %s\n", secretID)
 	fmt.Printf("  - %s\n", metadataFile)
 	fmt.Printf("  - %s\n", contentsFile)
 
@@ -184,6 +186,7 @@ func pullSSLCert(meta PullMetadata, log *zerolog.Logger) error {
 	log.Debug().Msgf("Using working directory: %s", workingDir)
 
 	// Fetch secret from AWS
+	fmt.Printf("Fetching secret from AWS: %s\n", secretID)
 	secretValue, err := tools.GetSecretValue(secretID)
 	if err != nil {
 		return fmt.Errorf("error fetching secret: %w", err)
@@ -247,7 +250,7 @@ func pullSSLCert(meta PullMetadata, log *zerolog.Logger) error {
 	}
 
 	log.Info().Msgf("Created files: %s, %s, %s", metadataFile, certFile, keyFile)
-	fmt.Printf("Successfully pulled secret: %s\n", secretID)
+	fmt.Printf("✓ Successfully pulled secret: %s\n", secretID)
 	fmt.Printf("  - %s\n", metadataFile)
 	fmt.Printf("  - %s\n", certFile)
 	fmt.Printf("  - %s\n", keyFile)
@@ -267,6 +270,7 @@ func pullRDSPostgres(meta PullMetadata, log *zerolog.Logger) error {
 	log.Debug().Msgf("Using working directory: %s", workingDir)
 
 	// Fetch secret from AWS
+	fmt.Printf("Fetching secret from AWS: %s\n", secretID)
 	secretValue, err := tools.GetSecretValue(secretID)
 	if err != nil {
 		return fmt.Errorf("error fetching secret: %w", err)
@@ -304,7 +308,7 @@ func pullRDSPostgres(meta PullMetadata, log *zerolog.Logger) error {
 	}
 
 	log.Info().Msgf("Created file: %s", filename)
-	fmt.Printf("Successfully pulled secret: %s\n", secretID)
+	fmt.Printf("✓ Successfully pulled secret: %s\n", secretID)
 	fmt.Printf("  - %s\n", filename)
 
 	return nil
@@ -322,6 +326,7 @@ func pullSnowflake(meta PullMetadata, log *zerolog.Logger) error {
 	log.Debug().Msgf("Using working directory: %s", workingDir)
 
 	// Fetch secret from AWS
+	fmt.Printf("Fetching secret from AWS: %s\n", secretID)
 	secretValue, err := tools.GetSecretValue(secretID)
 	if err != nil {
 		return fmt.Errorf("error fetching secret: %w", err)
@@ -358,7 +363,7 @@ func pullSnowflake(meta PullMetadata, log *zerolog.Logger) error {
 	}
 
 	log.Info().Msgf("Created file: %s", filename)
-	fmt.Printf("Successfully pulled secret: %s\n", secretID)
+	fmt.Printf("✓ Successfully pulled secret: %s\n", secretID)
 	fmt.Printf("  - %s\n", filename)
 
 	return nil

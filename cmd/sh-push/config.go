@@ -25,7 +25,16 @@ func GetConfig() (config Config, err error) {
 
 	// Validate required flags
 	if config.MetadataFile == "" {
-		return config, fmt.Errorf("metadata file is required (-metadata flag)")
+		return config, fmt.Errorf(`metadata file is required
+
+Usage:
+  sh-push -metadata=<file>
+
+Examples:
+  sh-push -metadata=jsondoc.dev.app.metadata.json
+  sh-push -metadata=/path/to/rdspostgres.prod.db.json
+
+Tip: Files are typically in ~/.secret-hoard/`)
 	}
 
 	// Resolve path - if not absolute, try relative to working directory
@@ -38,7 +47,14 @@ func GetConfig() (config Config, err error) {
 	}
 
 	if !tools.FileExists(config.MetadataFile) {
-		return config, fmt.Errorf("metadata file does not exist: %s", config.MetadataFile)
+		workingDir, _ := tools.GetWorkingDir()
+		return config, fmt.Errorf(`metadata file not found: %s
+
+Tip: Check files in your working directory:
+  ls %s
+
+Or use an absolute path:
+  sh-push -metadata=/full/path/to/file.json`, config.MetadataFile, workingDir)
 	}
 
 	return config, nil

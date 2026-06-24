@@ -97,6 +97,7 @@ func pushJSONDoc(metadataFile string, metadataMap map[string]interface{}, log *z
 	log.Info().Msgf("Secret ID: %s", secretID)
 
 	// Check if secret exists
+	fmt.Printf("Checking if secret exists: %s\n", secretID)
 	if !localSecret.Exists(log) {
 		// Secret doesn't exist - create it
 		fmt.Printf("\nSecret does not exist. Creating new secret: %s\n\n", secretID)
@@ -114,13 +115,15 @@ func pushJSONDoc(metadataFile string, metadataMap map[string]interface{}, log *z
 			return nil
 		}
 
+		fmt.Println("Creating secret in AWS Secrets Manager...")
 		localSecret.Create(log)
 		log.Info().Msgf("Secret created: %s", secretID)
-		fmt.Printf("\nSecret created successfully: %s\n", secretID)
+		fmt.Printf("✓ Secret created successfully: %s\n", secretID)
 		return nil
 	}
 
 	// Secret exists - fetch and compare
+	fmt.Println("Fetching current version from AWS...")
 	remoteSecretValue, err := tools.GetSecretValue(secretID)
 	if err != nil {
 		return fmt.Errorf("error fetching remote secret: %w", err)
@@ -138,13 +141,14 @@ func pushJSONDoc(metadataFile string, metadataMap map[string]interface{}, log *z
 	}
 
 	// Check if secrets are equal
+	fmt.Println("Comparing local and remote versions...")
 	if SecretsAreEqual(localSecret.Data, remoteSecret.Data) {
-		fmt.Println("Local and remote secrets are identical. No update needed.")
+		fmt.Println("✓ Local and remote secrets are identical. No update needed.")
 		return nil
 	}
 
 	// Generate and display diff
-	fmt.Printf("\nComparing local files to remote secret: %s\n\n", secretID)
+	fmt.Printf("\nChanges detected in secret: %s\n\n", secretID)
 	diff := GenerateJSONDiff(localSecret.Data, remoteSecret.Data)
 	fmt.Println(diff)
 
@@ -156,9 +160,10 @@ func pushJSONDoc(metadataFile string, metadataMap map[string]interface{}, log *z
 	}
 
 	// Update secret
+	fmt.Println("Updating secret in AWS Secrets Manager...")
 	localSecret.Update(true, log)
 	log.Info().Msgf("Secret updated: %s", secretID)
-	fmt.Printf("\nSecret updated successfully: %s\n", secretID)
+	fmt.Printf("✓ Secret updated successfully: %s\n", secretID)
 
 	return nil
 }
@@ -201,6 +206,7 @@ func pushTextFile(metadataFile string, metadataMap map[string]interface{}, log *
 	log.Info().Msgf("Secret ID: %s", secretID)
 
 	// Check if secret exists
+	fmt.Printf("Checking if secret exists: %s\n", secretID)
 	if !localSecret.Exists(log) {
 		// Secret doesn't exist - create it
 		fmt.Printf("\nSecret does not exist. Creating new secret: %s\n\n", secretID)
@@ -218,9 +224,10 @@ func pushTextFile(metadataFile string, metadataMap map[string]interface{}, log *
 			return nil
 		}
 
+		fmt.Println("Creating secret in AWS Secrets Manager...")
 		localSecret.Create(log)
 		log.Info().Msgf("Secret created: %s", secretID)
-		fmt.Printf("\nSecret created successfully: %s\n", secretID)
+		fmt.Printf("✓ Secret created successfully: %s\n", secretID)
 		return nil
 	}
 
@@ -242,13 +249,14 @@ func pushTextFile(metadataFile string, metadataMap map[string]interface{}, log *
 	}
 
 	// Check if secrets are equal
+	fmt.Println("Comparing local and remote versions...")
 	if SecretsAreEqual(localSecret.Data, remoteSecret.Data) {
-		fmt.Println("Local and remote secrets are identical. No update needed.")
+		fmt.Println("✓ Local and remote secrets are identical. No update needed.")
 		return nil
 	}
 
 	// Generate and display diff
-	fmt.Printf("\nComparing local files to remote secret: %s\n\n", secretID)
+	fmt.Printf("\nChanges detected in secret: %s\n\n", secretID)
 	diff := GenerateJSONDiff(localSecret.Data, remoteSecret.Data)
 	fmt.Println(diff)
 
@@ -260,9 +268,10 @@ func pushTextFile(metadataFile string, metadataMap map[string]interface{}, log *
 	}
 
 	// Update secret
+	fmt.Println("Updating secret in AWS Secrets Manager...")
 	localSecret.Update(true, log)
 	log.Info().Msgf("Secret updated: %s", secretID)
-	fmt.Printf("\nSecret updated successfully: %s\n", secretID)
+	fmt.Printf("✓ Secret updated successfully: %s\n", secretID)
 
 	return nil
 }
@@ -341,6 +350,7 @@ func pushSSLCert(metadataFile string, metadataMap map[string]interface{}, log *z
 	log.Info().Msgf("Secret ID: %s", secretID)
 
 	// Check if secret exists
+	fmt.Printf("Checking if secret exists: %s\n", secretID)
 	if !localSecret.Exists(log) {
 		// Secret doesn't exist - create it
 		fmt.Printf("\nSecret does not exist. Creating new secret: %s\n\n", secretID)
@@ -358,9 +368,10 @@ func pushSSLCert(metadataFile string, metadataMap map[string]interface{}, log *z
 			return nil
 		}
 
+		fmt.Println("Creating secret in AWS Secrets Manager...")
 		localSecret.Create(log)
 		log.Info().Msgf("Secret created: %s", secretID)
-		fmt.Printf("\nSecret created successfully: %s\n", secretID)
+		fmt.Printf("✓ Secret created successfully: %s\n", secretID)
 		return nil
 	}
 
@@ -382,13 +393,14 @@ func pushSSLCert(metadataFile string, metadataMap map[string]interface{}, log *z
 	}
 
 	// Check if secrets are equal
+	fmt.Println("Comparing local and remote versions...")
 	if SecretsAreEqual(localSecret.Data, remoteSecret.Data) {
-		fmt.Println("Local and remote secrets are identical. No update needed.")
+		fmt.Println("✓ Local and remote secrets are identical. No update needed.")
 		return nil
 	}
 
 	// Generate and display diff
-	fmt.Printf("\nComparing local files to remote secret: %s\n\n", secretID)
+	fmt.Printf("\nChanges detected in secret: %s\n\n", secretID)
 	diff := GenerateJSONDiff(localSecret.Data, remoteSecret.Data)
 	fmt.Println(diff)
 
@@ -400,9 +412,10 @@ func pushSSLCert(metadataFile string, metadataMap map[string]interface{}, log *z
 	}
 
 	// Update secret
+	fmt.Println("Updating secret in AWS Secrets Manager...")
 	localSecret.Update(true, log)
 	log.Info().Msgf("Secret updated: %s", secretID)
-	fmt.Printf("\nSecret updated successfully: %s\n", secretID)
+	fmt.Printf("✓ Secret updated successfully: %s\n", secretID)
 
 	return nil
 }
@@ -433,6 +446,7 @@ func pushRDSPostgres(metadataFile string, metadataMap map[string]interface{}, lo
 	log.Info().Msgf("Secret ID: %s", secretID)
 
 	// Check if secret exists
+	fmt.Printf("Checking if secret exists: %s\n", secretID)
 	if !localSecret.Exists(log) {
 		// Secret doesn't exist - create it
 		fmt.Printf("\nSecret does not exist. Creating new secret: %s\n\n", secretID)
@@ -450,9 +464,10 @@ func pushRDSPostgres(metadataFile string, metadataMap map[string]interface{}, lo
 			return nil
 		}
 
+		fmt.Println("Creating secret in AWS Secrets Manager...")
 		localSecret.Create(log)
 		log.Info().Msgf("Secret created: %s", secretID)
-		fmt.Printf("\nSecret created successfully: %s\n", secretID)
+		fmt.Printf("✓ Secret created successfully: %s\n", secretID)
 		return nil
 	}
 
@@ -474,13 +489,14 @@ func pushRDSPostgres(metadataFile string, metadataMap map[string]interface{}, lo
 	}
 
 	// Check if secrets are equal
+	fmt.Println("Comparing local and remote versions...")
 	if SecretsAreEqual(localSecret.Data, remoteSecret.Data) {
-		fmt.Println("Local and remote secrets are identical. No update needed.")
+		fmt.Println("✓ Local and remote secrets are identical. No update needed.")
 		return nil
 	}
 
 	// Generate and display diff
-	fmt.Printf("\nComparing local files to remote secret: %s\n\n", secretID)
+	fmt.Printf("\nChanges detected in secret: %s\n\n", secretID)
 	diff := GenerateJSONDiff(localSecret.Data, remoteSecret.Data)
 	fmt.Println(diff)
 
@@ -492,9 +508,10 @@ func pushRDSPostgres(metadataFile string, metadataMap map[string]interface{}, lo
 	}
 
 	// Update secret
+	fmt.Println("Updating secret in AWS Secrets Manager...")
 	localSecret.Update(true, log)
 	log.Info().Msgf("Secret updated: %s", secretID)
-	fmt.Printf("\nSecret updated successfully: %s\n", secretID)
+	fmt.Printf("✓ Secret updated successfully: %s\n", secretID)
 
 	return nil
 }
@@ -525,6 +542,7 @@ func pushSnowflake(metadataFile string, metadataMap map[string]interface{}, log 
 	log.Info().Msgf("Secret ID: %s", secretID)
 
 	// Check if secret exists
+	fmt.Printf("Checking if secret exists: %s\n", secretID)
 	if !localSecret.Exists(log) {
 		// Secret doesn't exist - create it
 		fmt.Printf("\nSecret does not exist. Creating new secret: %s\n\n", secretID)
@@ -542,9 +560,10 @@ func pushSnowflake(metadataFile string, metadataMap map[string]interface{}, log 
 			return nil
 		}
 
+		fmt.Println("Creating secret in AWS Secrets Manager...")
 		localSecret.Create(log)
 		log.Info().Msgf("Secret created: %s", secretID)
-		fmt.Printf("\nSecret created successfully: %s\n", secretID)
+		fmt.Printf("✓ Secret created successfully: %s\n", secretID)
 		return nil
 	}
 
@@ -566,13 +585,14 @@ func pushSnowflake(metadataFile string, metadataMap map[string]interface{}, log 
 	}
 
 	// Check if secrets are equal
+	fmt.Println("Comparing local and remote versions...")
 	if SecretsAreEqual(localSecret.Data, remoteSecret.Data) {
-		fmt.Println("Local and remote secrets are identical. No update needed.")
+		fmt.Println("✓ Local and remote secrets are identical. No update needed.")
 		return nil
 	}
 
 	// Generate and display diff
-	fmt.Printf("\nComparing local files to remote secret: %s\n\n", secretID)
+	fmt.Printf("\nChanges detected in secret: %s\n\n", secretID)
 	diff := GenerateJSONDiff(localSecret.Data, remoteSecret.Data)
 	fmt.Println(diff)
 
@@ -584,9 +604,10 @@ func pushSnowflake(metadataFile string, metadataMap map[string]interface{}, log 
 	}
 
 	// Update secret
+	fmt.Println("Updating secret in AWS Secrets Manager...")
 	localSecret.Update(true, log)
 	log.Info().Msgf("Secret updated: %s", secretID)
-	fmt.Printf("\nSecret updated successfully: %s\n", secretID)
+	fmt.Printf("✓ Secret updated successfully: %s\n", secretID)
 
 	return nil
 }

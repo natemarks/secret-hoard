@@ -53,29 +53,71 @@ func GetConfig() (config Config, err error) {
 
 	// Validate flag-based input
 	if config.Env == "" {
-		return config, fmt.Errorf("environment is required (-env flag)")
+		return config, fmt.Errorf(`environment is required
+
+Usage:
+  sh-pull -type=<type> -env=<env> [type-specific flags]
+
+Example:
+  sh-pull -type=jsondoc -env=dev -access=app-config
+
+Tip: Run 'sh-pull' without flags for interactive mode`)
 	}
 
 	// Validate type-specific required flags
 	switch config.Type {
 	case "rdspostgres":
 		if config.Instance == "" || config.Database == "" || config.Access == "" {
-			return config, fmt.Errorf("rdspostgres requires -instance, -database, and -access flags")
+			return config, fmt.Errorf(`rdspostgres requires additional flags
+
+Usage:
+  sh-pull -type=rdspostgres -env=<env> -instance=<inst> -database=<db> -access=<access>
+
+Example:
+  sh-pull -type=rdspostgres -env=dev -instance=mydb -database=appdb -access=readonly`)
 		}
 	case "snowflake":
 		if config.Warehouse == "" || config.Access == "" {
-			return config, fmt.Errorf("snowflake requires -warehouse and -access flags")
+			return config, fmt.Errorf(`snowflake requires additional flags
+
+Usage:
+  sh-pull -type=snowflake -env=<env> -warehouse=<warehouse> -access=<access>
+
+Example:
+  sh-pull -type=snowflake -env=prod -warehouse=analytics -access=readonly`)
 		}
 	case "ssl_certificate":
 		if config.CommonName == "" {
-			return config, fmt.Errorf("ssl_certificate requires -commonname flag")
+			return config, fmt.Errorf(`ssl_certificate requires -commonname flag
+
+Usage:
+  sh-pull -type=ssl_certificate -env=<env> -commonname=<domain>
+
+Example:
+  sh-pull -type=ssl_certificate -env=prod -commonname=example.com`)
 		}
 	case "jsondoc", "text_file":
 		if config.Access == "" {
-			return config, fmt.Errorf("%s requires -access flag", config.Type)
+			return config, fmt.Errorf(`%s requires -access flag
+
+Usage:
+  sh-pull -type=%s -env=<env> -access=<access>
+
+Example:
+  sh-pull -type=%s -env=dev -access=app-config`, config.Type, config.Type, config.Type)
 		}
 	default:
-		return config, fmt.Errorf("unknown secret type: %s", config.Type)
+		return config, fmt.Errorf(`unknown secret type: %q
+
+Valid types:
+  - rdspostgres
+  - snowflake
+  - ssl_certificate
+  - jsondoc
+  - text_file
+
+Example:
+  sh-pull -type=jsondoc -env=dev -access=app-config`, config.Type)
 	}
 
 	return config, nil
