@@ -4,7 +4,6 @@ import (
 	"flag"
 
 	"github.com/natemarks/secret-hoard/tools"
-	"github.com/rs/zerolog"
 )
 
 // Config is the configuration for the sh-generate command
@@ -23,11 +22,7 @@ func GetConfig() (config Config, err error) {
 }
 
 // GetLogger returns a configured logger
-func (c Config) GetLogger() zerolog.Logger {
-	// Use simple logger without AWS account number since sh-generate is local-only
-	log := tools.SimpleLogger()
-	if !c.Debug {
-		log = log.Level(zerolog.InfoLevel)
-	}
-	return log
+func (c Config) GetLogger() *tools.Logger {
+	// Simple logger for local-only command
+	return tools.NewLogger(c.Debug)
 }

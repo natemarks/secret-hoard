@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/natemarks/secret-hoard/tools"
-	"github.com/rs/zerolog"
+
 )
 
 // Record is the struct of the rdspostgres record
@@ -33,10 +33,10 @@ func (r Record) CSVColumns() string {
 }
 
 // RecordsFromCSV reads a CSV file and returns a slice of SSLCertRecords
-func RecordsFromCSV(csvFile string, log *zerolog.Logger) (result []Record, err error) {
+func RecordsFromCSV(csvFile string, log *tools.Logger) (result []Record, err error) {
 	records, err := tools.GetCSVRecordsFromFile(csvFile)
 	if err != nil {
-		log.Error().Err(err).Msg("error reading store contents string")
+		log.Error("error reading store contents string")
 		return result, err
 	}
 
@@ -47,7 +47,7 @@ func RecordsFromCSV(csvFile string, log *zerolog.Logger) (result []Record, err e
 		}
 		port, err := strconv.Atoi(record[7])
 		if err != nil {
-			log.Error().Err(err).Msgf("error converting port %s to int", record[6])
+			log.Error("error converting port %s to int", record[6])
 			continue
 		}
 		result = append(result, Record{

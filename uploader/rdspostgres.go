@@ -5,18 +5,18 @@ import (
 
 	"github.com/natemarks/secret-hoard/rdspostgres"
 	"github.com/natemarks/secret-hoard/tools"
-	"github.com/rs/zerolog"
+
 )
 
 // RDSPostgresProcessor implement CSVProcessor for rdspostgres secrets
 type RDSPostgresProcessor struct{}
 
 // Process handles the rdspostgres secrets CSV files
-func (r RDSPostgresProcessor) Process(cfg tools.Config, log *zerolog.Logger) {
+func (r RDSPostgresProcessor) Process(cfg tools.Config, log *tools.Logger) {
 	var secrets []rdspostgres.Secret
 	records, err := rdspostgres.RecordsFromCSV(cfg.FilePath, log)
 	if err != nil {
-		log.Fatal().Err(err).Msgf("error reading secrets from file %s", cfg.FilePath)
+		log.Fatal("error reading secrets from file %s", cfg.FilePath)
 	}
 	for _, record := range records {
 		// skip header row
@@ -25,7 +25,7 @@ func (r RDSPostgresProcessor) Process(cfg tools.Config, log *zerolog.Logger) {
 		}
 		secret, err := rdspostgres.FromCSVRecord(record, log)
 		if err != nil {
-			log.Error().Err(err).Msgf("error converting record to secret: %v", record)
+			log.Error("error converting record to secret: %v", record)
 			continue
 		}
 		secrets = append(secrets, secret)

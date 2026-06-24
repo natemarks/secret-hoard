@@ -3,11 +3,7 @@ package tools
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
-
-	"github.com/natemarks/secret-hoard/version"
-	"github.com/rs/zerolog"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -82,18 +78,4 @@ func GetResourceTypeFromSecretID(secretID string) (result string, err error) {
 		return "", fmt.Errorf("invalid secret ID: %s", secretID)
 	}
 	return parts[0], nil
-}
-
-func TestLogger() (log zerolog.Logger) {
-	log = zerolog.New(os.Stdout).With().Str("version", version.Version).Timestamp().Logger()
-	log = log.With().Str("aws_account_number", GetAWSAccountNumber()).Logger()
-	log = log.Level(zerolog.DebugLevel)
-	return log
-}
-
-// SimpleLogger returns a logger without AWS account number (for local-only commands)
-func SimpleLogger() (log zerolog.Logger) {
-	log = zerolog.New(os.Stdout).With().Str("version", version.Version).Timestamp().Logger()
-	log = log.Level(zerolog.DebugLevel)
-	return log
 }

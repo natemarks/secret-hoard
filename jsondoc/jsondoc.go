@@ -12,7 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager/types"
 	"github.com/natemarks/secret-hoard/tools"
 
-	"github.com/rs/zerolog"
+
 )
 
 // Metadata server certificate secret metadata for tagging
@@ -51,12 +51,12 @@ type Secret struct {
 }
 
 // Exists checks if the secret exists in Secrets Manager
-func (s Secret) Exists(log *zerolog.Logger) bool {
+func (s Secret) Exists(log *tools.Logger) bool {
 
 	// Load AWS SDK configuration
 	cfg, err := config.LoadDefaultConfig(context.Background())
 	if err != nil {
-		log.Fatal().Err(err).Msg("unable to load SDK config")
+		log.Fatal("unable to load SDK config")
 	}
 
 	// Create Secrets Manager client
@@ -72,17 +72,17 @@ func (s Secret) Exists(log *zerolog.Logger) bool {
 	if err != nil {
 		var e *types.ResourceNotFoundException
 		if errors.As(err, &e) {
-			log.Debug().Msgf("secret does not exist: %s", *input.SecretId)
+			log.Debug("secret does not exist: %s", *input.SecretId)
 			return false
 		}
 	}
-	log.Debug().Msgf("secret exists: %s", *input.SecretId)
+	log.Debug("secret exists: %s", *input.SecretId)
 	return true
 }
 
 // Create the Secret
-func (s Secret) Create(log *zerolog.Logger) {
-	log.Debug().Msgf("creating jsondoc secret: %s", s.Metadata.SecretID())
+func (s Secret) Create(log *tools.Logger) {
+	log.Debug("creating jsondoc secret: %s", s.Metadata.SecretID())
 	ctx := context.Background()
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
@@ -94,7 +94,7 @@ func (s Secret) Create(log *zerolog.Logger) {
 	// Convert RDSSecretData to JSON string
 	secretValue, err := json.Marshal(s.Data)
 	if err != nil {
-		log.Error().Err(err).Msg("error marshalling secret data")
+		log.Error("error marshalling secret data")
 		return
 	}
 
@@ -110,16 +110,16 @@ func (s Secret) Create(log *zerolog.Logger) {
 	_, err = client.CreateSecret(ctx, createSecretInput)
 	// If the secret already exists and overwrite is true, update it
 	if err != nil {
-		log.Error().Err(err).Msgf("error creating jsondoc secret: %s", *createSecretInput.Name)
+		log.Error("error creating jsondoc secret: %s", *createSecretInput.Name)
 		return
 	}
-	log.Info().Msgf("secret created successfully: %s", *createSecretInput.Name)
+	log.Info("secret created successfully: %s", *createSecretInput.Name)
 }
 
 // Update the secret
-func (s Secret) Update(overwrite bool, log *zerolog.Logger) {
+func (s Secret) Update(overwrite bool, log *tools.Logger) {
 	if !overwrite {
-		log.Debug().Msgf("overwrite is false, skipping update for %s", s.Metadata.SecretID())
+		log.Debug("overwrite is false, skipping update for %s", s.Metadata.SecretID())
 		return
 	}
 	ctx := context.Background()
@@ -133,7 +133,7 @@ func (s Secret) Update(overwrite bool, log *zerolog.Logger) {
 	// Convert RDSSecretData to JSON string
 	secretValue, err := json.Marshal(s.Data)
 	if err != nil {
-		log.Error().Err(err).Msg("error marshalling secret data")
+		log.Error("error marshalling secret data")
 		return
 	}
 
@@ -149,7 +149,7 @@ func (s Secret) Update(overwrite bool, log *zerolog.Logger) {
 	_, err = client.UpdateSecret(ctx, updateSecretInput)
 	// If the secret already exists and overwrite is true, update it
 	if err != nil {
-		log.Error().Err(err).Msgf("error updating secret value: %s", *updateSecretInput.SecretId)
+		log.Error("error updating secret value: %s", *updateSecretInput.SecretId)
 		return
 	}
 
@@ -160,23 +160,23 @@ func (s Secret) Update(overwrite bool, log *zerolog.Logger) {
 	}
 	_, err = client.TagResource(ctx, tagResourceInput)
 	if err != nil {
-		log.Error().Err(err).Msgf("error updating secret tags: %s", *updateSecretInput.SecretId)
+		log.Error("error updating secret tags: %s", *updateSecretInput.SecretId)
 		return
 	}
-	log.Info().Msgf("secret update successfully: %s", *updateSecretInput.SecretId)
+	log.Info("secret update successfully: %s", *updateSecretInput.SecretId)
 }
 
 // FromCSVRecord converts a CSV record to a valid Secret
-func FromCSVRecord(record Record, log *zerolog.Logger) (secret Secret, err error) {
+func FromCSVRecord(record Record, log *tools.Logger) (secret Secret, err error) {
 
 	sha256Sum, err := record.Sha256Sum()
 	if err != nil {
-		log.Error().Err(err).Msg("error getting sha256sum")
+		log.Error("error getting sha256sum")
 		return secret, err
 	}
 	contents, err := record.JSONContents()
 	if err != nil {
-		log.Error().Err(err).Msg("error getting JSON contents")
+		log.Error("error getting JSON contents")
 		return secret, err
 	}
 
@@ -191,6 +191,6 @@ func FromCSVRecord(record Record, log *zerolog.Logger) (secret Secret, err error
 			Access:       record.Access,
 		},
 	}
-	log.Debug().Msgf("new secret from CSV: %v", secret.Metadata.SecretID())
+	log.Debug("new secret from CSV: %v", secret.Metadata.SecretID())
 	return secret, err
 }

@@ -5,18 +5,18 @@ import (
 
 	"github.com/natemarks/secret-hoard/sslcert"
 	"github.com/natemarks/secret-hoard/tools"
-	"github.com/rs/zerolog"
+
 )
 
 // SSLCertProcessor implement CSVProcessor for rdspostgres secrets
 type SSLCertProcessor struct{}
 
 // Process handles the jsondoc secrets CSV files
-func (s SSLCertProcessor) Process(cfg tools.Config, log *zerolog.Logger) {
+func (s SSLCertProcessor) Process(cfg tools.Config, log *tools.Logger) {
 	var secrets []sslcert.Secret
 	records, err := sslcert.RecordsFromCSV(cfg.FilePath, log)
 	if err != nil {
-		log.Fatal().Err(err).Msgf("error reading secrets from file %s", cfg.FilePath)
+		log.Fatal("error reading secrets from file %s", cfg.FilePath)
 	}
 	for _, record := range records {
 		// skip header row
@@ -25,7 +25,7 @@ func (s SSLCertProcessor) Process(cfg tools.Config, log *zerolog.Logger) {
 		}
 		secret, err := sslcert.FromCSVRecord(record, log)
 		if err != nil {
-			log.Error().Err(err).Msgf("error converting record to secret: %v", record)
+			log.Error("error converting record to secret: %v", record)
 			continue
 		}
 		secrets = append(secrets, secret)

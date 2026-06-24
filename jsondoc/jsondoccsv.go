@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/natemarks/secret-hoard/tools"
-	"github.com/rs/zerolog"
+
 )
 
 // Record is the struct of the SSL certificate record
@@ -56,10 +56,10 @@ func (r Record) JSONContents() (contents string, err error) {
 }
 
 // RecordsFromCSV reads a CSV file and returns a slice of Records
-func RecordsFromCSV(csvFile string, log *zerolog.Logger) (result []Record, err error) {
+func RecordsFromCSV(csvFile string, log *tools.Logger) (result []Record, err error) {
 	records, err := tools.GetCSVRecordsFromFile(csvFile)
 	if err != nil {
-		log.Error().Err(err).Msg("error reading store contents string")
+		log.Error("error reading store contents string")
 		return result, err
 	}
 

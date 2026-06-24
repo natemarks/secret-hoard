@@ -17,11 +17,10 @@ import (
 	"github.com/natemarks/secret-hoard/sslcert"
 	"github.com/natemarks/secret-hoard/textfile"
 	"github.com/natemarks/secret-hoard/tools"
-	"github.com/rs/zerolog"
 )
 
 // PushSecret uploads a secret from local files after showing diff and requiring confirmation
-func PushSecret(metadataFile string, log *zerolog.Logger) error {
+func PushSecret(metadataFile string, log *tools.Logger) error {
 	// Read metadata file
 	metadataJSON, err := tools.ReadFileToString(metadataFile)
 	if err != nil {
@@ -40,7 +39,7 @@ func PushSecret(metadataFile string, log *zerolog.Logger) error {
 		return fmt.Errorf("metadata file missing resourceType field")
 	}
 
-	log.Debug().Msgf("Processing secret type: %s", resourceType)
+	log.Debug("Processing secret type: %s", resourceType)
 
 	// Route to type-specific handler
 	switch resourceType {
@@ -59,7 +58,7 @@ func PushSecret(metadataFile string, log *zerolog.Logger) error {
 	}
 }
 
-func pushJSONDoc(metadataFile string, metadataMap map[string]interface{}, log *zerolog.Logger) error {
+func pushJSONDoc(metadataFile string, metadataMap map[string]interface{}, log *tools.Logger) error {
 	// Extract metadata
 	environment := metadataMap["environment"].(string)
 	access := metadataMap["access"].(string)
@@ -94,7 +93,7 @@ func pushJSONDoc(metadataFile string, metadataMap map[string]interface{}, log *z
 	}
 
 	secretID := localSecret.Metadata.SecretID()
-	log.Info().Msgf("Secret ID: %s", secretID)
+	log.Info("Secret ID: %s", secretID)
 
 	// Check if secret exists
 	fmt.Printf("Checking if secret exists: %s\n", secretID)
@@ -117,7 +116,7 @@ func pushJSONDoc(metadataFile string, metadataMap map[string]interface{}, log *z
 
 		fmt.Println("Creating secret in AWS Secrets Manager...")
 		localSecret.Create(log)
-		log.Info().Msgf("Secret created: %s", secretID)
+		log.Info("Secret created: %s", secretID)
 		fmt.Printf("✓ Secret created successfully: %s\n", secretID)
 		return nil
 	}
@@ -162,13 +161,13 @@ func pushJSONDoc(metadataFile string, metadataMap map[string]interface{}, log *z
 	// Update secret
 	fmt.Println("Updating secret in AWS Secrets Manager...")
 	localSecret.Update(true, log)
-	log.Info().Msgf("Secret updated: %s", secretID)
+	log.Info("Secret updated: %s", secretID)
 	fmt.Printf("✓ Secret updated successfully: %s\n", secretID)
 
 	return nil
 }
 
-func pushTextFile(metadataFile string, metadataMap map[string]interface{}, log *zerolog.Logger) error {
+func pushTextFile(metadataFile string, metadataMap map[string]interface{}, log *tools.Logger) error {
 	// Extract metadata
 	environment := metadataMap["environment"].(string)
 	access := metadataMap["access"].(string)
@@ -203,7 +202,7 @@ func pushTextFile(metadataFile string, metadataMap map[string]interface{}, log *
 	}
 
 	secretID := localSecret.Metadata.SecretID()
-	log.Info().Msgf("Secret ID: %s", secretID)
+	log.Info("Secret ID: %s", secretID)
 
 	// Check if secret exists
 	fmt.Printf("Checking if secret exists: %s\n", secretID)
@@ -226,7 +225,7 @@ func pushTextFile(metadataFile string, metadataMap map[string]interface{}, log *
 
 		fmt.Println("Creating secret in AWS Secrets Manager...")
 		localSecret.Create(log)
-		log.Info().Msgf("Secret created: %s", secretID)
+		log.Info("Secret created: %s", secretID)
 		fmt.Printf("✓ Secret created successfully: %s\n", secretID)
 		return nil
 	}
@@ -270,13 +269,13 @@ func pushTextFile(metadataFile string, metadataMap map[string]interface{}, log *
 	// Update secret
 	fmt.Println("Updating secret in AWS Secrets Manager...")
 	localSecret.Update(true, log)
-	log.Info().Msgf("Secret updated: %s", secretID)
+	log.Info("Secret updated: %s", secretID)
 	fmt.Printf("✓ Secret updated successfully: %s\n", secretID)
 
 	return nil
 }
 
-func pushSSLCert(metadataFile string, metadataMap map[string]interface{}, log *zerolog.Logger) error {
+func pushSSLCert(metadataFile string, metadataMap map[string]interface{}, log *tools.Logger) error {
 	// Extract metadata
 	environment := metadataMap["environment"].(string)
 	commonName := metadataMap["commonName"].(string)
@@ -347,7 +346,7 @@ func pushSSLCert(metadataFile string, metadataMap map[string]interface{}, log *z
 	}
 
 	secretID := localSecret.Metadata.SecretID()
-	log.Info().Msgf("Secret ID: %s", secretID)
+	log.Info("Secret ID: %s", secretID)
 
 	// Check if secret exists
 	fmt.Printf("Checking if secret exists: %s\n", secretID)
@@ -370,7 +369,7 @@ func pushSSLCert(metadataFile string, metadataMap map[string]interface{}, log *z
 
 		fmt.Println("Creating secret in AWS Secrets Manager...")
 		localSecret.Create(log)
-		log.Info().Msgf("Secret created: %s", secretID)
+		log.Info("Secret created: %s", secretID)
 		fmt.Printf("✓ Secret created successfully: %s\n", secretID)
 		return nil
 	}
@@ -414,13 +413,13 @@ func pushSSLCert(metadataFile string, metadataMap map[string]interface{}, log *z
 	// Update secret
 	fmt.Println("Updating secret in AWS Secrets Manager...")
 	localSecret.Update(true, log)
-	log.Info().Msgf("Secret updated: %s", secretID)
+	log.Info("Secret updated: %s", secretID)
 	fmt.Printf("✓ Secret updated successfully: %s\n", secretID)
 
 	return nil
 }
 
-func pushRDSPostgres(metadataFile string, metadataMap map[string]interface{}, log *zerolog.Logger) error {
+func pushRDSPostgres(metadataFile string, metadataMap map[string]interface{}, log *tools.Logger) error {
 	// For single-file types, the metadata file IS the complete file
 	fileJSON, err := tools.ReadFileToString(metadataFile)
 	if err != nil {
@@ -443,7 +442,7 @@ func pushRDSPostgres(metadataFile string, metadataMap map[string]interface{}, lo
 	}
 
 	secretID := localSecret.Metadata.SecretID()
-	log.Info().Msgf("Secret ID: %s", secretID)
+	log.Info("Secret ID: %s", secretID)
 
 	// Check if secret exists
 	fmt.Printf("Checking if secret exists: %s\n", secretID)
@@ -466,7 +465,7 @@ func pushRDSPostgres(metadataFile string, metadataMap map[string]interface{}, lo
 
 		fmt.Println("Creating secret in AWS Secrets Manager...")
 		localSecret.Create(log)
-		log.Info().Msgf("Secret created: %s", secretID)
+		log.Info("Secret created: %s", secretID)
 		fmt.Printf("✓ Secret created successfully: %s\n", secretID)
 		return nil
 	}
@@ -510,13 +509,13 @@ func pushRDSPostgres(metadataFile string, metadataMap map[string]interface{}, lo
 	// Update secret
 	fmt.Println("Updating secret in AWS Secrets Manager...")
 	localSecret.Update(true, log)
-	log.Info().Msgf("Secret updated: %s", secretID)
+	log.Info("Secret updated: %s", secretID)
 	fmt.Printf("✓ Secret updated successfully: %s\n", secretID)
 
 	return nil
 }
 
-func pushSnowflake(metadataFile string, metadataMap map[string]interface{}, log *zerolog.Logger) error {
+func pushSnowflake(metadataFile string, metadataMap map[string]interface{}, log *tools.Logger) error {
 	// For single-file types, the metadata file IS the complete file
 	fileJSON, err := tools.ReadFileToString(metadataFile)
 	if err != nil {
@@ -539,7 +538,7 @@ func pushSnowflake(metadataFile string, metadataMap map[string]interface{}, log 
 	}
 
 	secretID := localSecret.Metadata.SecretID()
-	log.Info().Msgf("Secret ID: %s", secretID)
+	log.Info("Secret ID: %s", secretID)
 
 	// Check if secret exists
 	fmt.Printf("Checking if secret exists: %s\n", secretID)
@@ -562,7 +561,7 @@ func pushSnowflake(metadataFile string, metadataMap map[string]interface{}, log 
 
 		fmt.Println("Creating secret in AWS Secrets Manager...")
 		localSecret.Create(log)
-		log.Info().Msgf("Secret created: %s", secretID)
+		log.Info("Secret created: %s", secretID)
 		fmt.Printf("✓ Secret created successfully: %s\n", secretID)
 		return nil
 	}
@@ -606,7 +605,7 @@ func pushSnowflake(metadataFile string, metadataMap map[string]interface{}, log 
 	// Update secret
 	fmt.Println("Updating secret in AWS Secrets Manager...")
 	localSecret.Update(true, log)
-	log.Info().Msgf("Secret updated: %s", secretID)
+	log.Info("Secret updated: %s", secretID)
 	fmt.Printf("✓ Secret updated successfully: %s\n", secretID)
 
 	return nil

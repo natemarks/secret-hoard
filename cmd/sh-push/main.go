@@ -15,11 +15,11 @@ func main() {
 	}
 
 	log := cfg.GetLogger()
-	log.Info().Msgf("config: %+v", cfg)
+	log.Debug("config: %+v", cfg)
 
-	err = push.PushSecret(cfg.MetadataFile, &log)
+	err = push.PushSecret(cfg.MetadataFile, log)
 	if err != nil {
-		log.Error().Err(err).Msg("PushSecret() error")
+		log.Error("PushSecret() error: %v", err)
 		os.Exit(1)
 	}
 }

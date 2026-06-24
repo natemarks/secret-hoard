@@ -44,7 +44,7 @@ func (sm *AWSSecretsManager) DescribeSecret(ctx context.Context, secretID string
 }
 
 // CreateSecret creates a new secret with tags
-func (sm *AWSSecretsManager) CreateSecret(ctx context.Context, secretID string, value interface{}, tags map[string]string) error {
+func (sm *AWSSecretsManager) CreateSecret(ctx context.Context, secretID string, value any, tags map[string]string) error {
 	// Convert value to JSON string
 	valueBytes, err := json.Marshal(value)
 	if err != nil {
@@ -79,7 +79,7 @@ func (sm *AWSSecretsManager) CreateSecret(ctx context.Context, secretID string, 
 }
 
 // UpdateSecret updates an existing secret
-func (sm *AWSSecretsManager) UpdateSecret(ctx context.Context, secretID string, value interface{}) error {
+func (sm *AWSSecretsManager) UpdateSecret(ctx context.Context, secretID string, value any) error {
 	// Convert value to JSON string
 	valueBytes, err := json.Marshal(value)
 	if err != nil {

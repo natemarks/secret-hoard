@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/natemarks/secret-hoard/tools"
-	"github.com/rs/zerolog"
 )
 
 // Config is the configuration for the sh-push command
@@ -61,10 +60,6 @@ Or use an absolute path:
 }
 
 // GetLogger returns a configured logger
-func (c Config) GetLogger() zerolog.Logger {
-	log := tools.TestLogger()
-	if !c.Debug {
-		log = log.Level(zerolog.InfoLevel)
-	}
-	return log
+func (c Config) GetLogger() *tools.Logger {
+	return tools.NewLogger(c.Debug)
 }

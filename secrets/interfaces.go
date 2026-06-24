@@ -3,7 +3,7 @@ package secrets
 import (
 	"context"
 
-	"github.com/rs/zerolog"
+	"github.com/natemarks/secret-hoard/tools"
 )
 
 // SecretsManager abstracts AWS Secrets Manager operations for testing
@@ -12,10 +12,10 @@ type SecretsManager interface {
 	DescribeSecret(ctx context.Context, secretID string) (bool, error)
 
 	// CreateSecret creates a new secret with tags
-	CreateSecret(ctx context.Context, secretID string, value interface{}, tags map[string]string) error
+	CreateSecret(ctx context.Context, secretID string, value any, tags map[string]string) error
 
 	// UpdateSecret updates an existing secret
-	UpdateSecret(ctx context.Context, secretID string, value interface{}) error
+	UpdateSecret(ctx context.Context, secretID string, value any) error
 
 	// GetSecretValue retrieves a secret's value
 	GetSecretValue(ctx context.Context, secretID string) (string, error)
@@ -48,16 +48,16 @@ type Secret interface {
 	Metadata() map[string]string
 
 	// Data returns the secret's data payload
-	Data() interface{}
+	Data() any
 
 	// Exists checks if the secret exists in AWS
-	Exists(log *zerolog.Logger) bool
+	Exists(log *tools.Logger) bool
 
 	// Create creates the secret in AWS with proper tags
-	Create(log *zerolog.Logger) error
+	Create(log *tools.Logger) error
 
 	// Update updates the secret in AWS
-	Update(overwrite bool, log *zerolog.Logger) error
+	Update(overwrite bool, log *tools.Logger) error
 }
 
 // SecretType represents a type of secret

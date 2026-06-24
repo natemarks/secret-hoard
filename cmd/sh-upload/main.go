@@ -6,11 +6,10 @@ import (
 
 	"github.com/natemarks/secret-hoard/tools"
 	"github.com/natemarks/secret-hoard/uploader"
-	"github.com/rs/zerolog"
 )
 
 // GetCSVProcessor returns the appropriate CSVProcessor based on the config
-func GetCSVProcessor(cfg tools.Config, log *zerolog.Logger) uploader.CSVProcessor {
+func GetCSVProcessor(cfg tools.Config, log *tools.Logger) uploader.CSVProcessor {
 	switch csvType := cfg.CSVType(); csvType {
 	case "rdspostgres":
 		return uploader.RDSPostgresProcessor{}
@@ -23,7 +22,7 @@ func GetCSVProcessor(cfg tools.Config, log *zerolog.Logger) uploader.CSVProcesso
 	case "ssl_certificate":
 		return uploader.SSLCertProcessor{}
 	default:
-		log.Error().Msgf("unknown CSV type: %s", csvType)
+		log.Error("unknown CSV type: %s", csvType)
 		os.Exit(1)
 		return nil
 	}
@@ -36,8 +35,8 @@ func main() {
 		os.Exit(1)
 	}
 	log := cfg.GetLogger()
-	log.Info().Msgf("config: %+v", cfg)
-	processor := GetCSVProcessor(cfg, &log)
-	processor.Process(cfg, &log)
+	log.Debug("config: %+v", cfg)
+	processor := GetCSVProcessor(cfg, log)
+	processor.Process(cfg, log)
 
 }

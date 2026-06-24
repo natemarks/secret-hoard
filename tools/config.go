@@ -4,14 +4,10 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
-
-	"github.com/natemarks/secret-hoard/version"
-	"github.com/rs/zerolog"
 )
 
 // Config is the configuration for the application
@@ -22,14 +18,8 @@ type Config struct {
 }
 
 // GetLogger returns a logger for the application
-func (c Config) GetLogger() (log zerolog.Logger) {
-	log = zerolog.New(os.Stdout).With().Str("version", version.Version).Timestamp().Logger()
-	log = log.With().Str("aws_account_number", GetAWSAccountNumber()).Logger()
-	log = log.Level(zerolog.InfoLevel)
-	if c.Debug {
-		log = log.Level(zerolog.DebugLevel)
-	}
-	return log
+func (c Config) GetLogger() *Logger {
+	return NewLogger(c.Debug)
 }
 
 // CSVType returns the type of the CSV file

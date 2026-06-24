@@ -5,13 +5,12 @@ import (
 	"fmt"
 
 	"github.com/natemarks/secret-hoard/tools"
-	"github.com/rs/zerolog"
 )
 
 const placeholder = tools.PlaceholderValue
 
 // GenerateSecretFiles creates local file scaffolding for a new secret
-func GenerateSecretFiles(log *zerolog.Logger) error {
+func GenerateSecretFiles(log *tools.Logger) error {
 	secretTypes := []string{"rdspostgres", "snowflake", "ssl_certificate", "jsondoc", "text_file"}
 	typeIndex := PromptForChoice("Select secret type:", secretTypes)
 	secretType := secretTypes[typeIndex]
@@ -34,7 +33,7 @@ func GenerateSecretFiles(log *zerolog.Logger) error {
 	}
 }
 
-func generateRDSPostgres(environment string, log *zerolog.Logger) error {
+func generateRDSPostgres(environment string, log *tools.Logger) error {
 	instance := PromptForString("Instance: ")
 	database := PromptForString("Database: ")
 	access := PromptForString("Access: ")
@@ -74,7 +73,7 @@ func generateRDSPostgres(environment string, log *zerolog.Logger) error {
 		return err
 	}
 
-	log.Info().Msgf("Generated file: %s", filename)
+	log.Info("Generated file: %s", filename)
 	fmt.Printf("\nGenerated files:\n  - %s\n\n", filename)
 	fmt.Printf("Next steps:\n")
 	fmt.Printf("  1. Edit the file and replace REPLACE-ME values\n")
@@ -83,7 +82,7 @@ func generateRDSPostgres(environment string, log *zerolog.Logger) error {
 	return nil
 }
 
-func generateSnowflake(environment string, log *zerolog.Logger) error {
+func generateSnowflake(environment string, log *tools.Logger) error {
 	warehouse := PromptForString("Warehouse: ")
 	access := PromptForString("Access: ")
 
@@ -119,7 +118,7 @@ func generateSnowflake(environment string, log *zerolog.Logger) error {
 		return err
 	}
 
-	log.Info().Msgf("Generated file: %s", filename)
+	log.Info("Generated file: %s", filename)
 	fmt.Printf("\nGenerated files:\n  - %s\n\n", filename)
 	fmt.Printf("Next steps:\n")
 	fmt.Printf("  1. Edit the file and replace REPLACE-ME values\n")
@@ -128,7 +127,7 @@ func generateSnowflake(environment string, log *zerolog.Logger) error {
 	return nil
 }
 
-func generateSSLCert(environment string, log *zerolog.Logger) error {
+func generateSSLCert(environment string, log *tools.Logger) error {
 	commonName := PromptForString("Common Name: ")
 
 	workingDir, err := tools.GetWorkingDir()
@@ -170,7 +169,7 @@ func generateSSLCert(environment string, log *zerolog.Logger) error {
 		return err
 	}
 
-	log.Info().Msgf("Generated files: %s, %s, %s", metadataFile, certFile, keyFile)
+	log.Info("Generated files: %s, %s, %s", metadataFile, certFile, keyFile)
 	fmt.Printf("\nGenerated files:\n  - %s\n  - %s\n  - %s\n\n", metadataFile, certFile, keyFile)
 	fmt.Printf("Next steps:\n")
 	fmt.Printf("  1. Add certificate content to %s\n", certFile)
@@ -180,7 +179,7 @@ func generateSSLCert(environment string, log *zerolog.Logger) error {
 	return nil
 }
 
-func generateJSONDoc(environment string, log *zerolog.Logger) error {
+func generateJSONDoc(environment string, log *tools.Logger) error {
 	access := PromptForString("Access: ")
 
 	workingDir, err := tools.GetWorkingDir()
@@ -213,7 +212,7 @@ func generateJSONDoc(environment string, log *zerolog.Logger) error {
 		return err
 	}
 
-	log.Info().Msgf("Generated files: %s, %s", metadataFile, contentsFile)
+	log.Info("Generated files: %s, %s", metadataFile, contentsFile)
 	fmt.Printf("\nGenerated files:\n  - %s\n  - %s\n\n", metadataFile, contentsFile)
 	fmt.Printf("Next steps:\n")
 	fmt.Printf("  1. Edit the %s file with your JSON document\n", contentsFile)
@@ -222,7 +221,7 @@ func generateJSONDoc(environment string, log *zerolog.Logger) error {
 	return nil
 }
 
-func generateTextFile(environment string, log *zerolog.Logger) error {
+func generateTextFile(environment string, log *tools.Logger) error {
 	access := PromptForString("Access: ")
 
 	workingDir, err := tools.GetWorkingDir()
@@ -255,7 +254,7 @@ func generateTextFile(environment string, log *zerolog.Logger) error {
 		return err
 	}
 
-	log.Info().Msgf("Generated files: %s, %s", metadataFile, contentsFile)
+	log.Info("Generated files: %s, %s", metadataFile, contentsFile)
 	fmt.Printf("\nGenerated files:\n  - %s\n  - %s\n\n", metadataFile, contentsFile)
 	fmt.Printf("Next steps:\n")
 	fmt.Printf("  1. Edit the %s file with your text content\n", contentsFile)

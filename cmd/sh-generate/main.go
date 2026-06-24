@@ -15,11 +15,11 @@ func main() {
 	}
 
 	log := cfg.GetLogger()
-	log.Info().Msgf("config: %+v", cfg)
+	log.Debug("config: %+v", cfg)
 
-	err = generate.GenerateSecretFiles(&log)
+	err = generate.GenerateSecretFiles(log)
 	if err != nil {
-		log.Error().Err(err).Msg("GenerateSecretFiles() error")
+		log.Error("GenerateSecretFiles() error: %v", err)
 		os.Exit(1)
 	}
 }

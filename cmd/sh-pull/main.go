@@ -15,12 +15,12 @@ func main() {
 	}
 
 	log := cfg.GetLogger()
-	log.Info().Msgf("config: %+v", cfg)
+	log.Debug("config: %+v", cfg)
 
 	pullMeta := cfg.ToPullMetadata()
-	err = pull.PullSecret(pullMeta, &log)
+	err = pull.PullSecret(pullMeta, log)
 	if err != nil {
-		log.Error().Err(err).Msg("PullSecret() error")
+		log.Error("PullSecret() error: %v", err)
 		os.Exit(1)
 	}
 }

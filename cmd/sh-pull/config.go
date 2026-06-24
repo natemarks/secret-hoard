@@ -7,7 +7,6 @@ import (
 	"github.com/natemarks/secret-hoard/generate"
 	"github.com/natemarks/secret-hoard/pull"
 	"github.com/natemarks/secret-hoard/tools"
-	"github.com/rs/zerolog"
 )
 
 // Config is the configuration for the sh-pull command
@@ -152,12 +151,8 @@ func promptForConfig() (config Config, err error) {
 }
 
 // GetLogger returns a configured logger
-func (c Config) GetLogger() zerolog.Logger {
-	log := tools.TestLogger()
-	if !c.Debug {
-		log = log.Level(zerolog.InfoLevel)
-	}
-	return log
+func (c Config) GetLogger() *tools.Logger {
+	return tools.NewLogger(c.Debug)
 }
 
 // ToPullMetadata converts Config to pull.PullMetadata

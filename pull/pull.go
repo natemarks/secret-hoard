@@ -10,7 +10,6 @@ import (
 	"github.com/natemarks/secret-hoard/sslcert"
 	"github.com/natemarks/secret-hoard/textfile"
 	"github.com/natemarks/secret-hoard/tools"
-	"github.com/rs/zerolog"
 )
 
 // PullMetadata contains the metadata needed to pull a secret
@@ -25,7 +24,7 @@ type PullMetadata struct {
 }
 
 // PullSecret downloads a secret and creates local editable files
-func PullSecret(meta PullMetadata, log *zerolog.Logger) error {
+func PullSecret(meta PullMetadata, log *tools.Logger) error {
 	switch meta.Type {
 	case "jsondoc":
 		return pullJSONDoc(meta, log)
@@ -42,16 +41,16 @@ func PullSecret(meta PullMetadata, log *zerolog.Logger) error {
 	}
 }
 
-func pullJSONDoc(meta PullMetadata, log *zerolog.Logger) error {
+func pullJSONDoc(meta PullMetadata, log *tools.Logger) error {
 	secretID := fmt.Sprintf("jsondoc/%s/%s", meta.Env, meta.Access)
-	log.Info().Msgf("Pulling secret: %s", secretID)
+	log.Info("Pulling secret: %s", secretID)
 
 	// Get working directory
 	workingDir, err := tools.GetWorkingDir()
 	if err != nil {
 		return err
 	}
-	log.Debug().Msgf("Using working directory: %s", workingDir)
+	log.Debug("Using working directory: %s", workingDir)
 
 	// Fetch secret from AWS
 	fmt.Printf("Fetching secret from AWS: %s\n", secretID)
@@ -96,11 +95,11 @@ func pullJSONDoc(meta PullMetadata, log *zerolog.Logger) error {
 	// Verify SHA256
 	err = tools.CheckSha256Sum(contentsFile, data.JSONSha256Sum)
 	if err != nil {
-		log.Warn().Err(err).Msg("SHA256 verification failed")
+		log.Error("SHA256 verification failed")
 		return fmt.Errorf("SHA256 verification failed: %w", err)
 	}
 
-	log.Info().Msgf("Created files: %s, %s", metadataFile, contentsFile)
+	log.Info("Created files: %s, %s", metadataFile, contentsFile)
 	fmt.Printf("✓ Successfully pulled secret: %s\n", secretID)
 	fmt.Printf("  - %s\n", metadataFile)
 	fmt.Printf("  - %s\n", contentsFile)
@@ -108,16 +107,16 @@ func pullJSONDoc(meta PullMetadata, log *zerolog.Logger) error {
 	return nil
 }
 
-func pullTextFile(meta PullMetadata, log *zerolog.Logger) error {
+func pullTextFile(meta PullMetadata, log *tools.Logger) error {
 	secretID := fmt.Sprintf("text_file/%s/%s", meta.Env, meta.Access)
-	log.Info().Msgf("Pulling secret: %s", secretID)
+	log.Info("Pulling secret: %s", secretID)
 
 	// Get working directory
 	workingDir, err := tools.GetWorkingDir()
 	if err != nil {
 		return err
 	}
-	log.Debug().Msgf("Using working directory: %s", workingDir)
+	log.Debug("Using working directory: %s", workingDir)
 
 	// Fetch secret from AWS
 	fmt.Printf("Fetching secret from AWS: %s\n", secretID)
@@ -162,11 +161,11 @@ func pullTextFile(meta PullMetadata, log *zerolog.Logger) error {
 	// Verify SHA256
 	err = tools.CheckSha256Sum(contentsFile, data.Sha256Sum)
 	if err != nil {
-		log.Warn().Err(err).Msg("SHA256 verification failed")
+		log.Error("SHA256 verification failed")
 		return fmt.Errorf("SHA256 verification failed: %w", err)
 	}
 
-	log.Info().Msgf("Created files: %s, %s", metadataFile, contentsFile)
+	log.Info("Created files: %s, %s", metadataFile, contentsFile)
 	fmt.Printf("✓ Successfully pulled secret: %s\n", secretID)
 	fmt.Printf("  - %s\n", metadataFile)
 	fmt.Printf("  - %s\n", contentsFile)
@@ -174,16 +173,16 @@ func pullTextFile(meta PullMetadata, log *zerolog.Logger) error {
 	return nil
 }
 
-func pullSSLCert(meta PullMetadata, log *zerolog.Logger) error {
+func pullSSLCert(meta PullMetadata, log *tools.Logger) error {
 	secretID := fmt.Sprintf("ssl_certificate/%s/%s", meta.Env, meta.CommonName)
-	log.Info().Msgf("Pulling secret: %s", secretID)
+	log.Info("Pulling secret: %s", secretID)
 
 	// Get working directory
 	workingDir, err := tools.GetWorkingDir()
 	if err != nil {
 		return err
 	}
-	log.Debug().Msgf("Using working directory: %s", workingDir)
+	log.Debug("Using working directory: %s", workingDir)
 
 	// Fetch secret from AWS
 	fmt.Printf("Fetching secret from AWS: %s\n", secretID)
@@ -231,7 +230,7 @@ func pullSSLCert(meta PullMetadata, log *zerolog.Logger) error {
 	// Verify certificate SHA256
 	err = tools.CheckSha256Sum(certFile, data.CertificateSha256)
 	if err != nil {
-		log.Warn().Err(err).Msg("Certificate SHA256 verification failed")
+		log.Error("Certificate SHA256 verification failed")
 		return fmt.Errorf("certificate SHA256 verification failed: %w", err)
 	}
 
@@ -245,11 +244,11 @@ func pullSSLCert(meta PullMetadata, log *zerolog.Logger) error {
 	// Verify key SHA256
 	err = tools.CheckSha256Sum(keyFile, data.PrivateKeySha256)
 	if err != nil {
-		log.Warn().Err(err).Msg("Private key SHA256 verification failed")
+		log.Error("Private key SHA256 verification failed")
 		return fmt.Errorf("private key SHA256 verification failed: %w", err)
 	}
 
-	log.Info().Msgf("Created files: %s, %s, %s", metadataFile, certFile, keyFile)
+	log.Info("Created files: %s, %s, %s", metadataFile, certFile, keyFile)
 	fmt.Printf("✓ Successfully pulled secret: %s\n", secretID)
 	fmt.Printf("  - %s\n", metadataFile)
 	fmt.Printf("  - %s\n", certFile)
@@ -258,16 +257,16 @@ func pullSSLCert(meta PullMetadata, log *zerolog.Logger) error {
 	return nil
 }
 
-func pullRDSPostgres(meta PullMetadata, log *zerolog.Logger) error {
+func pullRDSPostgres(meta PullMetadata, log *tools.Logger) error {
 	secretID := fmt.Sprintf("rdspostgres/%s/%s/%s/%s", meta.Env, meta.Instance, meta.Database, meta.Access)
-	log.Info().Msgf("Pulling secret: %s", secretID)
+	log.Info("Pulling secret: %s", secretID)
 
 	// Get working directory
 	workingDir, err := tools.GetWorkingDir()
 	if err != nil {
 		return err
 	}
-	log.Debug().Msgf("Using working directory: %s", workingDir)
+	log.Debug("Using working directory: %s", workingDir)
 
 	// Fetch secret from AWS
 	fmt.Printf("Fetching secret from AWS: %s\n", secretID)
@@ -307,23 +306,23 @@ func pullRDSPostgres(meta PullMetadata, log *zerolog.Logger) error {
 		return fmt.Errorf("error writing file: %w", err)
 	}
 
-	log.Info().Msgf("Created file: %s", filename)
+	log.Info("Created file: %s", filename)
 	fmt.Printf("✓ Successfully pulled secret: %s\n", secretID)
 	fmt.Printf("  - %s\n", filename)
 
 	return nil
 }
 
-func pullSnowflake(meta PullMetadata, log *zerolog.Logger) error {
+func pullSnowflake(meta PullMetadata, log *tools.Logger) error {
 	secretID := fmt.Sprintf("snowflake/%s/%s/%s", meta.Env, meta.Warehouse, meta.Access)
-	log.Info().Msgf("Pulling secret: %s", secretID)
+	log.Info("Pulling secret: %s", secretID)
 
 	// Get working directory
 	workingDir, err := tools.GetWorkingDir()
 	if err != nil {
 		return err
 	}
-	log.Debug().Msgf("Using working directory: %s", workingDir)
+	log.Debug("Using working directory: %s", workingDir)
 
 	// Fetch secret from AWS
 	fmt.Printf("Fetching secret from AWS: %s\n", secretID)
@@ -362,7 +361,7 @@ func pullSnowflake(meta PullMetadata, log *zerolog.Logger) error {
 		return fmt.Errorf("error writing file: %w", err)
 	}
 
-	log.Info().Msgf("Created file: %s", filename)
+	log.Info("Created file: %s", filename)
 	fmt.Printf("✓ Successfully pulled secret: %s\n", secretID)
 	fmt.Printf("  - %s\n", filename)
 
