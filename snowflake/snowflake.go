@@ -1,19 +1,11 @@
 package snowflake
 
 import (
-	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
-	"github.com/aws/aws-sdk-go-v2/service/secretsmanager/types"
+	"github.com/natemarks/secret-hoard/secrets"
 	"github.com/natemarks/secret-hoard/tools"
-
 )
-
 // Metadata RDS secret metadata for tagging
 type Metadata struct {
 	ResourceType string `json:"resourceType"` // snowflake
@@ -57,119 +49,45 @@ type Secret struct {
 	Metadata Metadata
 }
 
+
+// secretAdapter adapts Secret to implement secrets.Secret interface
+type secretAdapter struct {
+	s Secret
+}
+
+func (sa secretAdapter) SecretID() string              { return sa.s.Metadata.SecretID() }
+func (sa secretAdapter) Metadata() map[string]string   { return sa.s.Metadata.Map() }
+func (sa secretAdapter) Data() any                     { return sa.s.Data }
+func (sa secretAdapter) Exists(log *tools.Logger) bool { return false }
+func (sa secretAdapter) Create(log *tools.Logger) error { return nil }
+func (sa secretAdapter) Update(overwrite bool, log *tools.Logger) error { return nil }
+
 // Exists checks if the secret exists in Secrets Manager
 func (s Secret) Exists(log *tools.Logger) bool {
-
-	// Load AWS SDK configuration
-	cfg, err := config.LoadDefaultConfig(context.Background())
-	if err != nil {
-		log.Fatal("unable to load SDK config")
-	}
-
-	// Create Secrets Manager client
-	client := secretsmanager.NewFromConfig(cfg)
-
-	// Input parameters for DescribeSecret API call
-	input := &secretsmanager.DescribeSecretInput{
-		SecretId: aws.String(s.Metadata.SecretID()),
-	}
-
-	// Call DescribeSecret API to check if the secret exists
-	_, err = client.DescribeSecret(context.Background(), input)
-	if err != nil {
-		var e *types.ResourceNotFoundException
-		if errors.As(err, &e) {
-			log.Debug("secret does not exist: %s", *input.SecretId)
-			return false
-		}
-	}
-	log.Debug("secret exists: %s", *input.SecretId)
-	return true
+	return secrets.GenericExists(secretAdapter{s}, log, secrets.DefaultSecretsManager())
 }
 
-// Create the secret in secretsmanager
+// Create the Secret
 func (s Secret) Create(log *tools.Logger) {
-	log.Debug("creating snowflake secret: %s", s.Metadata.SecretID())
-	ctx := context.Background()
-	cfg, err := config.LoadDefaultConfig(ctx)
+	log.Debug("creating secret: %s", s.Metadata.SecretID())
+	err := secrets.GenericCreate(secretAdapter{s}, log, secrets.DefaultSecretsManager())
 	if err != nil {
-		panic("configuration error, " + err.Error())
-	}
-
-	client := secretsmanager.NewFromConfig(cfg)
-
-	// Convert RDSSecretData to JSON string
-	secretValue, err := json.Marshal(s.Data)
-	if err != nil {
-		log.Error("error marshalling secret data")
+		log.Error("error creating secret: %s - %v", s.Metadata.SecretID(), err)
 		return
 	}
-
-	// Convert RDSSecretMetadata to tags
-	tags := s.Metadata.Map()
-
-	// Create the secret
-	createSecretInput := &secretsmanager.CreateSecretInput{
-		Name:         aws.String(fmt.Sprint(s.Metadata.SecretID())),
-		SecretString: aws.String(string(secretValue)),
-		Tags:         tools.ConvertMapToTags(tags),
-	}
-	_, err = client.CreateSecret(ctx, createSecretInput)
-	// If the secret already exists and overwrite is true, update it
-	if err != nil {
-		log.Error("error creating snowflake secret: %s", *createSecretInput.Name)
-		return
-	}
-	log.Info("secret created successfully: %s", *createSecretInput.Name)
+	log.Info("secret created successfully: %s", s.Metadata.SecretID())
 }
 
-// Update the RDS secret
+// Update the secret
 func (s Secret) Update(overwrite bool, log *tools.Logger) {
 	if !overwrite {
 		log.Debug("overwrite is false, skipping update for %s", s.Metadata.SecretID())
 		return
 	}
-	ctx := context.Background()
-	cfg, err := config.LoadDefaultConfig(ctx)
+	err := secrets.GenericUpdate(secretAdapter{s}, log, secrets.DefaultSecretsManager(), overwrite)
 	if err != nil {
-		panic("configuration error, " + err.Error())
-	}
-
-	client := secretsmanager.NewFromConfig(cfg)
-
-	// Convert RDSSecretData to JSON string
-	secretValue, err := json.Marshal(s.Data)
-	if err != nil {
-		log.Error("error marshalling secret data")
+		log.Error("error updating secret: %s - %v", s.Metadata.SecretID(), err)
 		return
 	}
-
-	// Convert RDSSecretMetadata to tags
-	tags := s.Metadata.Map()
-
-	// Create the secret
-	// Update the secret string value
-	updateSecretInput := &secretsmanager.UpdateSecretInput{
-		SecretId:     aws.String(fmt.Sprint(s.Metadata.SecretID())),
-		SecretString: aws.String(string(secretValue)),
-	}
-	_, err = client.UpdateSecret(ctx, updateSecretInput)
-	// If the secret already exists and overwrite is true, update it
-	if err != nil {
-		log.Error("error updating secret value: %s", *updateSecretInput.SecretId)
-		return
-	}
-
-	// Update the secret tags
-	tagResourceInput := &secretsmanager.TagResourceInput{
-		SecretId: aws.String(fmt.Sprint(s.Metadata.SecretID())),
-		Tags:     tools.ConvertMapToTags(tags),
-	}
-	_, err = client.TagResource(ctx, tagResourceInput)
-	if err != nil {
-		log.Error("error updating secret tags: %s", *updateSecretInput.SecretId)
-		return
-	}
-	log.Info("secret update successfully: %s", *updateSecretInput.SecretId)
+	log.Info("secret updated successfully: %s", s.Metadata.SecretID())
 }
-
