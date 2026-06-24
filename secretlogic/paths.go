@@ -2,7 +2,6 @@ package secretlogic
 
 import (
 	"fmt"
-	"path/filepath"
 	"strings"
 )
 
@@ -35,7 +34,7 @@ func BuildSnowflakePath(workingDir, env, warehouse, access string) string {
 }
 
 // GetBaseName extracts the base filename without .metadata.json suffix
+// Preserves the directory path if present
 func GetBaseName(metadataFile string) string {
-	base := filepath.Base(metadataFile)
-	return strings.TrimSuffix(base, ".metadata.json")
+	return strings.TrimSuffix(metadataFile, ".metadata.json")
 }

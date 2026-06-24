@@ -73,7 +73,7 @@ func TestGetBaseName(t *testing.T) {
 	}{
 		{
 			input:    "/home/user/jsondoc.dev.myaccess.metadata.json",
-			expected: "jsondoc.dev.myaccess",
+			expected: "/home/user/jsondoc.dev.myaccess",
 		},
 		{
 			input:    "textfile.prod.apikey.metadata.json",
@@ -81,7 +81,7 @@ func TestGetBaseName(t *testing.T) {
 		},
 		{
 			input:    "/var/secrets/sslcert.staging.example.com.metadata.json",
-			expected: "sslcert.staging.example.com",
+			expected: "/var/secrets/sslcert.staging.example.com",
 		},
 	}
 

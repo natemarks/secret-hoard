@@ -66,6 +66,10 @@ func pushJSONDoc(metadataFile string, metadataMap map[string]interface{}, log *t
 	baseName := secretlogic.GetBaseName(metadataFile)
 	contentsFile := baseName + ".contents.json"
 
+	log.Debug("Metadata file: %s", metadataFile)
+	log.Debug("Base name: %s", baseName)
+	log.Debug("Contents file: %s", contentsFile)
+
 	// Read contents file
 	contents, err := tools.ReadFileToString(contentsFile)
 	if err != nil {
@@ -174,6 +178,10 @@ func pushTextFile(metadataFile string, metadataMap map[string]interface{}, log *
 	// Build file paths
 	baseName := strings.TrimSuffix(metadataFile, ".metadata.json")
 	contentsFile := baseName + ".contents.txt"
+
+	log.Debug("Metadata file: %s", metadataFile)
+	log.Debug("Base name: %s", baseName)
+	log.Debug("Contents file: %s", contentsFile)
 
 	// Read contents file
 	contents, err := tools.ReadFileToString(contentsFile)
