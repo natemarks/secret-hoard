@@ -47,12 +47,12 @@ type secretAdapter struct {
 	s Secret
 }
 
-func (sa secretAdapter) SecretID() string          { return sa.s.Metadata.SecretID() }
-func (sa secretAdapter) Metadata() map[string]string { return sa.s.Metadata.Map() }
-func (sa secretAdapter) Data() any                 { return sa.s.Data }
-func (sa secretAdapter) Exists(log *tools.Logger) bool { return false } // Not used
-func (sa secretAdapter) Create(log *tools.Logger) error { return nil }  // Not used
-func (sa secretAdapter) Update(overwrite bool, log *tools.Logger) error { return nil } // Not used
+func (sa secretAdapter) SecretID() string                               { return sa.s.Metadata.SecretID() }
+func (sa secretAdapter) Metadata() map[string]string                    { return sa.s.Metadata.Map() }
+func (sa secretAdapter) Data() any                                      { return sa.s.Data }
+func (sa secretAdapter) Exists(log *tools.Logger) bool                  { return false } // Not used
+func (sa secretAdapter) Create(log *tools.Logger) error                 { return nil }   // Not used
+func (sa secretAdapter) Update(overwrite bool, log *tools.Logger) error { return nil }   // Not used
 
 // Exists checks if the secret exists in Secrets Manager
 func (s Secret) Exists(log *tools.Logger) bool {
@@ -83,4 +83,3 @@ func (s Secret) Update(overwrite bool, log *tools.Logger) {
 	}
 	log.Info("secret updated successfully: %s", s.Metadata.SecretID())
 }
-

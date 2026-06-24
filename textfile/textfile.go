@@ -6,6 +6,7 @@ import (
 	"github.com/natemarks/secret-hoard/secrets"
 	"github.com/natemarks/secret-hoard/tools"
 )
+
 // Metadata server certificate secret metadata for tagging
 type Metadata struct {
 	ResourceType string `json:"resourceType"` // json_document
@@ -41,17 +42,16 @@ type Secret struct {
 	Metadata Metadata
 }
 
-
 // secretAdapter adapts Secret to implement secrets.Secret interface
 type secretAdapter struct {
 	s Secret
 }
 
-func (sa secretAdapter) SecretID() string              { return sa.s.Metadata.SecretID() }
-func (sa secretAdapter) Metadata() map[string]string   { return sa.s.Metadata.Map() }
-func (sa secretAdapter) Data() any                     { return sa.s.Data }
-func (sa secretAdapter) Exists(log *tools.Logger) bool { return false }
-func (sa secretAdapter) Create(log *tools.Logger) error { return nil }
+func (sa secretAdapter) SecretID() string                               { return sa.s.Metadata.SecretID() }
+func (sa secretAdapter) Metadata() map[string]string                    { return sa.s.Metadata.Map() }
+func (sa secretAdapter) Data() any                                      { return sa.s.Data }
+func (sa secretAdapter) Exists(log *tools.Logger) bool                  { return false }
+func (sa secretAdapter) Create(log *tools.Logger) error                 { return nil }
 func (sa secretAdapter) Update(overwrite bool, log *tools.Logger) error { return nil }
 
 // Exists checks if the secret exists in Secrets Manager

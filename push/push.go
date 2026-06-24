@@ -586,4 +586,3 @@ func extractPrivateKeyModulus(keyFile string) (string, error) {
 
 	return rsaPrivateKey.N.String(), nil
 }
-

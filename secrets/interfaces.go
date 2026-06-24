@@ -64,11 +64,11 @@ type Secret interface {
 type SecretType string
 
 const (
-	TypeJSONDoc        SecretType = "jsondoc"
-	TypeTextField      SecretType = "text_file"
-	TypeSSLCert        SecretType = "ssl_certificate"
-	TypeRDSPostgres    SecretType = "rdspostgres"
-	TypeSnowflake      SecretType = "snowflake"
+	TypeJSONDoc     SecretType = "jsondoc"
+	TypeTextField   SecretType = "text_file"
+	TypeSSLCert     SecretType = "ssl_certificate"
+	TypeRDSPostgres SecretType = "rdspostgres"
+	TypeSnowflake   SecretType = "snowflake"
 )
 
 // ValidSecretTypes returns all valid secret types

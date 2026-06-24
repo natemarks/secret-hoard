@@ -3,6 +3,7 @@ package secrets
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -34,11 +35,18 @@ func (sm *AWSSecretsManager) DescribeSecret(ctx context.Context, secretID string
 		SecretId: aws.String(secretID),
 	})
 	if err != nil {
+		// Check if it's a ResourceNotFoundException by type comparison
+		// Note: We check the type without calling .Error() on the AWS SDK error
+		// because some error implementations may have nil internal fields
 		var notFound *types.ResourceNotFoundException
-		if err.Error() == notFound.Error() || err.Error() == "ResourceNotFoundException" {
+		if errors.As(err, &notFound) {
+			// Secret doesn't exist - this is expected, not an error
 			return false, nil
 		}
-		return false, fmt.Errorf("error describing secret: %w", err)
+		// Some other AWS error occurred - this is a real error
+		// DO NOT wrap the error with fmt.Errorf here because the AWS SDK error
+		// may have nil internal fields that cause panics when .Error() is called
+		return false, err
 	}
 	return true, nil
 }
