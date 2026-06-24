@@ -14,7 +14,6 @@ import (
 	"github.com/natemarks/secret-hoard/rdspostgres"
 	"github.com/natemarks/secret-hoard/secretlogic"
 	"github.com/natemarks/secret-hoard/snowflake"
-	"github.com/natemarks/secret-hoard/sslcert"
 	"github.com/natemarks/secret-hoard/textfile"
 	"github.com/natemarks/secret-hoard/tools"
 )
@@ -281,142 +280,50 @@ func pushSSLCert(metadataFile string, metadataMap map[string]interface{}, log *t
 	commonName := metadataMap["commonName"].(string)
 
 	// Build file paths
-	baseName := strings.TrimSuffix(metadataFile, ".metadata.json")
-	certFile := baseName + ".crt"
-	keyFile := baseName + ".key"
+	files := buildSSLCertFilePaths(metadataFile)
 
 	// Read certificate and key files
-	certContents, err := tools.ReadFileToString(certFile)
+	certContents, keyContents, err := readSSLCertFiles(files)
 	if err != nil {
-		return fmt.Errorf("error reading certificate file: %w", err)
-	}
-
-	keyContents, err := tools.ReadFileToString(keyFile)
-	if err != nil {
-		return fmt.Errorf("error reading key file: %w", err)
+		return err
 	}
 
 	// Extract expiration date
-	expiration, err := extractExpiration(certFile)
+	expiration, err := extractExpiration(files.certFile)
 	if err != nil {
 		return fmt.Errorf("error extracting expiration: %w", err)
 	}
 
-	// Extract modulus from cert and key
-	certModulus, err := extractCertificateModulus(certFile)
+	// Validate cert and key match, get modulus
+	modulus, err := validateSSLCertPair(files.certFile, files.keyFile)
 	if err != nil {
-		return fmt.Errorf("error extracting certificate modulus: %w", err)
-	}
-
-	keyModulus, err := extractPrivateKeyModulus(keyFile)
-	if err != nil {
-		return fmt.Errorf("error extracting private key modulus: %w", err)
-	}
-
-	if certModulus != keyModulus {
-		return fmt.Errorf("certificate and private key moduli do not match")
+		return err
 	}
 
 	// Compute SHA256 sums
-	certSha256, err := tools.GetSHA256Sum(certFile)
+	certSha256, keySha256, err := computeSSLCertHashes(files.certFile, files.keyFile)
 	if err != nil {
-		return fmt.Errorf("error computing certificate SHA256: %w", err)
-	}
-
-	keySha256, err := tools.GetSHA256Sum(keyFile)
-	if err != nil {
-		return fmt.Errorf("error computing key SHA256: %w", err)
+		return err
 	}
 
 	// Build local secret
-	localSecret := sslcert.Secret{
-		Metadata: sslcert.Metadata{
-			ResourceType: "ssl_certificate",
-			Environment:  environment,
-			CommonName:   commonName,
-		},
-		Data: sslcert.Data{
-			Certificate:       certContents,
-			PrivateKey:        keyContents,
-			ExpirationDate:    expiration,
-			Modulus:           certModulus,
-			CertificateSha256: certSha256,
-			PrivateKeySha256:  keySha256,
-		},
-	}
+	localSecret := buildSSLCertSecret(
+		environment, commonName,
+		certContents, keyContents,
+		expiration, modulus,
+		certSha256, keySha256,
+	)
 
 	secretID := localSecret.Metadata.SecretID()
 	log.Info("Secret ID: %s", secretID)
 
-	// Check if secret exists
+	// Check if secret exists and handle accordingly
 	fmt.Printf("Checking if secret exists: %s\n", secretID)
 	if !localSecret.Exists(log) {
-		// Secret doesn't exist - create it
-		fmt.Printf("\nSecret does not exist. Creating new secret: %s\n\n", secretID)
-
-		// Show what will be created
-		fmt.Println("New secret contents:")
-		secretJSON, _ := json.MarshalIndent(localSecret.Data, "", "  ")
-		fmt.Println(string(secretJSON))
-		fmt.Println()
-
-		// Prompt for confirmation
-		confirmString := GenerateRandomString(4)
-		if !PromptForConfirmation(confirmString) {
-			fmt.Println("Creation cancelled.")
-			return nil
-		}
-
-		fmt.Println("Creating secret in AWS Secrets Manager...")
-		localSecret.Create(log)
-		log.Info("Secret created: %s", secretID)
-		fmt.Printf("✓ Secret created successfully: %s\n", secretID)
-		return nil
+		return handleSSLCertCreate(localSecret, log)
 	}
 
-	// Fetch remote secret
-	remoteSecretValue, err := tools.GetSecretValue(secretID)
-	if err != nil {
-		return fmt.Errorf("error fetching remote secret: %w", err)
-	}
-
-	var remoteData sslcert.Data
-	err = json.Unmarshal([]byte(remoteSecretValue), &remoteData)
-	if err != nil {
-		return fmt.Errorf("error parsing remote secret: %w", err)
-	}
-
-	remoteSecret := sslcert.Secret{
-		Metadata: localSecret.Metadata,
-		Data:     remoteData,
-	}
-
-	// Check if secrets are equal
-	fmt.Println("Comparing local and remote versions...")
-	if secretlogic.SecretsAreEqual(localSecret.Data, remoteSecret.Data) {
-		fmt.Println("✓ Local and remote secrets are identical. No update needed.")
-		return nil
-	}
-
-	// Generate and display diff
-	fmt.Printf("\nChanges detected in secret: %s\n\n", secretID)
-	diff := secretlogic.GenerateJSONDiff(localSecret.Data, remoteSecret.Data)
-	fmt.Println(diff)
-
-	// Prompt for confirmation
-	confirmString := GenerateRandomString(4)
-	if !PromptForConfirmation(confirmString) {
-		fmt.Println("Update cancelled.")
-		return nil
-	}
-
-	// Update secret
-	fmt.Println("Updating secret in AWS Secrets Manager...")
-	localSecret.Update(true, log)
-	log.Info("Secret updated: %s", secretID)
-	fmt.Printf("✓ Secret updated successfully: %s\n", secretID)
-
-	return nil
+	return handleSSLCertUpdate(localSecret, log)
 }
 
 func pushRDSPostgres(metadataFile string, metadataMap map[string]interface{}, log *tools.Logger) error {
