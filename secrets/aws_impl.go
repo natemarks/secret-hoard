@@ -60,6 +60,8 @@ func (sm *AWSSecretsManager) CreateSecret(ctx context.Context, secretID string, 
 	}
 
 	// Convert tags map to AWS tags format
+	// Note: The Source tag should already be included in the tags map
+	// by the secret type's Metadata.Map() method
 	awsTags := make([]types.Tag, 0, len(tags))
 	for k, v := range tags {
 		awsTags = append(awsTags, types.Tag{
@@ -67,12 +69,6 @@ func (sm *AWSSecretsManager) CreateSecret(ctx context.Context, secretID string, 
 			Value: aws.String(v),
 		})
 	}
-
-	// Add Source tag
-	awsTags = append(awsTags, types.Tag{
-		Key:   aws.String("Source"),
-		Value: aws.String("secret-hoard"),
-	})
 
 	_, err = sm.client.CreateSecret(ctx, &secretsmanager.CreateSecretInput{
 		Name:         aws.String(secretID),
