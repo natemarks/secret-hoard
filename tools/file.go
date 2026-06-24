@@ -91,3 +91,24 @@ func CheckSha256Sum(filePath string, expected string) (err error) {
 	}
 	return nil
 }
+
+// GetWorkingDir returns the working directory for secret files
+// Defaults to $HOME/.secret-hoard/ and creates it if it doesn't exist
+func GetWorkingDir() (string, error) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("error getting home directory: %w", err)
+	}
+
+	workingDir := fmt.Sprintf("%s/.secret-hoard", homeDir)
+
+	// Create directory if it doesn't exist
+	if !FileExists(workingDir) {
+		err = os.MkdirAll(workingDir, 0755)
+		if err != nil {
+			return "", fmt.Errorf("error creating working directory: %w", err)
+		}
+	}
+
+	return workingDir, nil
+}

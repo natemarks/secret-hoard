@@ -1,0 +1,54 @@
+package main
+
+import (
+	"flag"
+	"fmt"
+
+	"github.com/natemarks/secret-hoard/tools"
+	"github.com/rs/zerolog"
+)
+
+// Config is the configuration for the sh-push command
+type Config struct {
+	MetadataFile string
+	Debug        bool
+}
+
+// GetConfig parses command line flags and returns a Config
+func GetConfig() (config Config, err error) {
+	metadataPtr := flag.String("metadata", "", "Path to metadata JSON file (relative to $HOME/.secret-hoard/ or absolute)")
+	debugPtr := flag.Bool("debug", false, "Enable Debug mode")
+	flag.Parse()
+
+	config.MetadataFile = *metadataPtr
+	config.Debug = *debugPtr
+
+	// Validate required flags
+	if config.MetadataFile == "" {
+		return config, fmt.Errorf("metadata file is required (-metadata flag)")
+	}
+
+	// Resolve path - if not absolute, try relative to working directory
+	if config.MetadataFile[0] != '/' {
+		workingDir, err := tools.GetWorkingDir()
+		if err != nil {
+			return config, err
+		}
+		config.MetadataFile = fmt.Sprintf("%s/%s", workingDir, config.MetadataFile)
+	}
+
+	if !tools.FileExists(config.MetadataFile) {
+		return config, fmt.Errorf("metadata file does not exist: %s", config.MetadataFile)
+	}
+
+	return config, nil
+}
+
+// GetLogger returns a configured logger
+func (c Config) GetLogger() zerolog.Logger {
+	log := tools.TestLogger()
+	if !c.Debug {
+		log = log.Level(zerolog.InfoLevel)
+	}
+	return log
+}
