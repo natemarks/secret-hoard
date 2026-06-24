@@ -90,3 +90,10 @@ func TestLogger() (log zerolog.Logger) {
 	log = log.Level(zerolog.DebugLevel)
 	return log
 }
+
+// SimpleLogger returns a logger without AWS account number (for local-only commands)
+func SimpleLogger() (log zerolog.Logger) {
+	log = zerolog.New(os.Stdout).With().Str("version", version.Version).Timestamp().Logger()
+	log = log.Level(zerolog.DebugLevel)
+	return log
+}

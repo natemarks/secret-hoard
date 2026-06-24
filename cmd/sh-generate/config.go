@@ -24,7 +24,8 @@ func GetConfig() (config Config, err error) {
 
 // GetLogger returns a configured logger
 func (c Config) GetLogger() zerolog.Logger {
-	log := tools.TestLogger()
+	// Use simple logger without AWS account number since sh-generate is local-only
+	log := tools.SimpleLogger()
 	if !c.Debug {
 		log = log.Level(zerolog.InfoLevel)
 	}
