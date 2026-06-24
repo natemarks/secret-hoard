@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/natemarks/secret-hoard/generate"
@@ -9,7 +10,8 @@ import (
 func main() {
 	cfg, err := GetConfig()
 	if err != nil {
-		panic(err)
+		fmt.Fprintf(os.Stderr, "Configuration error: %v\n", err)
+		os.Exit(1)
 	}
 
 	log := cfg.GetLogger()
@@ -17,7 +19,7 @@ func main() {
 
 	err = generate.GenerateSecretFiles(&log)
 	if err != nil {
-		log.Fatal().Err(err).Msg("GenerateSecretFiles() error")
+		log.Error().Err(err).Msg("GenerateSecretFiles() error")
 		os.Exit(1)
 	}
 }

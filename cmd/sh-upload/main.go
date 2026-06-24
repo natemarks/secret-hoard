@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/natemarks/secret-hoard/tools"
 	"github.com/natemarks/secret-hoard/uploader"
 	"github.com/rs/zerolog"
@@ -20,15 +23,17 @@ func GetCSVProcessor(cfg tools.Config, log *zerolog.Logger) uploader.CSVProcesso
 	case "ssl_certificate":
 		return uploader.SSLCertProcessor{}
 	default:
-		log.Fatal().Msgf("unknown CSV type: %s", csvType)
+		log.Error().Msgf("unknown CSV type: %s", csvType)
+		os.Exit(1)
 		return nil
-
 	}
 }
+
 func main() {
 	cfg, err := tools.GetConfig()
 	if err != nil {
-		panic(err)
+		fmt.Fprintf(os.Stderr, "Configuration error: %v\n", err)
+		os.Exit(1)
 	}
 	log := cfg.GetLogger()
 	log.Info().Msgf("config: %+v", cfg)

@@ -8,6 +8,8 @@ import (
 	"github.com/rs/zerolog"
 )
 
+const placeholder = tools.PlaceholderValue
+
 // GenerateSecretFiles creates local file scaffolding for a new secret
 func GenerateSecretFiles(log *zerolog.Logger) error {
 	secretTypes := []string{"rdspostgres", "snowflake", "ssl_certificate", "jsondoc", "text_file"}
@@ -53,12 +55,12 @@ func generateRDSPostgres(environment string, log *zerolog.Logger) error {
 			"access":       access,
 		},
 		"data": map[string]interface{}{
-			"password":             "REPLACE-ME",
-			"engine":               "REPLACE-ME",
+			"password":             placeholder,
+			"engine":               placeholder,
 			"port":                 5432,
-			"dbInstanceIdentifier": "REPLACE-ME",
-			"host":                 "REPLACE-ME",
-			"username":             "REPLACE-ME",
+			"dbInstanceIdentifier": placeholder,
+			"host":                 placeholder,
+			"username":             placeholder,
 		},
 	}
 
@@ -100,10 +102,10 @@ func generateSnowflake(environment string, log *zerolog.Logger) error {
 			"access":       access,
 		},
 		"data": map[string]interface{}{
-			"password":    "REPLACE-ME",
-			"accountName": "REPLACE-ME",
+			"password":    placeholder,
+			"accountName": placeholder,
 			"warehouse":   warehouse,
-			"username":    "REPLACE-ME",
+			"username":    placeholder,
 		},
 	}
 
@@ -142,10 +144,10 @@ func generateSSLCert(environment string, log *zerolog.Logger) error {
 		"resourceType":      "ssl_certificate",
 		"environment":       environment,
 		"commonName":        commonName,
-		"expirationDate":    "REPLACE-ME",
-		"modulus":           "REPLACE-ME",
-		"certificateSha256": "REPLACE-ME",
-		"privateKeySha256":  "REPLACE-ME",
+		"expirationDate":    placeholder,
+		"modulus":           placeholder,
+		"certificateSha256": placeholder,
+		"privateKeySha256":  placeholder,
 	}
 
 	jsonBytes, err := json.MarshalIndent(metadata, "", "  ")
@@ -193,7 +195,7 @@ func generateJSONDoc(environment string, log *zerolog.Logger) error {
 		"resourceType":  "jsondoc",
 		"environment":   environment,
 		"access":        access,
-		"JSONSha256Sum": "REPLACE-ME",
+		"JSONSha256Sum": placeholder,
 	}
 
 	jsonBytes, err := json.MarshalIndent(metadata, "", "  ")
@@ -235,7 +237,7 @@ func generateTextFile(environment string, log *zerolog.Logger) error {
 		"resourceType": "text_file",
 		"environment":  environment,
 		"access":       access,
-		"sha256Sum":    "REPLACE-ME",
+		"sha256Sum":    placeholder,
 	}
 
 	jsonBytes, err := json.MarshalIndent(metadata, "", "  ")

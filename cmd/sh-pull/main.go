@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/natemarks/secret-hoard/pull"
@@ -9,7 +10,8 @@ import (
 func main() {
 	cfg, err := GetConfig()
 	if err != nil {
-		panic(err)
+		fmt.Fprintf(os.Stderr, "Configuration error: %v\n", err)
+		os.Exit(1)
 	}
 
 	log := cfg.GetLogger()
@@ -18,7 +20,7 @@ func main() {
 	pullMeta := cfg.ToPullMetadata()
 	err = pull.PullSecret(pullMeta, &log)
 	if err != nil {
-		log.Fatal().Err(err).Msg("PullSecret() error")
+		log.Error().Err(err).Msg("PullSecret() error")
 		os.Exit(1)
 	}
 }

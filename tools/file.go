@@ -32,7 +32,7 @@ func ReadFileToString(filepath string) (string, error) {
 // WriteStringToFile writes a string to a file.
 func WriteStringToFile(content string, filename string) error {
 	// Write the string content to the file
-	err := os.WriteFile(filename, []byte(content), 0644)
+	err := os.WriteFile(filename, []byte(content), DefaultFilePermissions)
 	if err != nil {
 		return err
 	}
@@ -104,7 +104,7 @@ func GetWorkingDir() (string, error) {
 
 	// Create directory if it doesn't exist
 	if !FileExists(workingDir) {
-		err = os.MkdirAll(workingDir, 0755)
+		err = os.MkdirAll(workingDir, DefaultDirPermissions)
 		if err != nil {
 			return "", fmt.Errorf("error creating working directory: %w", err)
 		}
