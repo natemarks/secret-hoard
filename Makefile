@@ -108,4 +108,4 @@ download: ## download biometric aware ssl cert tarball
 upload: ## upload biometric aware ssl tarball
 	bash scripts/upload.sh
 
-.PHONY: build release static vet lint fmt gocyclo goimports test
+.PHONY: build release static vet lint fmt gocyclo goimports test ${EXECUTABLES}
