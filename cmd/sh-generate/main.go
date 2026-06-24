@@ -5,9 +5,12 @@ import (
 	"os"
 
 	"github.com/natemarks/secret-hoard/generate"
+	"github.com/natemarks/secret-hoard/version"
 )
 
 func main() {
+	fmt.Fprintf(os.Stderr, "sh-generate version: %s\n", version.GetVersion())
+
 	cfg, err := GetConfig()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Configuration error: %v\n", err)
