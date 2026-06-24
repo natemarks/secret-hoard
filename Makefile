@@ -35,6 +35,112 @@ build: git-status ${EXECUTABLES}
 	rm -f build/current
 	ln -s $(CDIR)/build/$(COMMIT) $(CDIR)/build/current
 
+check-release: ## Check version and description of latest GitHub release
+	@echo "Checking latest release..."
+	@if ! command -v gh >/dev/null 2>&1; then \
+		echo "Error: gh (GitHub CLI) is not installed"; \
+		echo "Install it from: https://cli.github.com/"; \
+		exit 1; \
+	fi; \
+	echo ""; \
+	echo "=== Latest Release ==="; \
+	gh release view --json tagName,name,body,createdAt,author,url | \
+		jq -r '"Version: \(.tagName)\nName: \(.name)\nAuthor: \(.author.login)\nCreated: \(.createdAt)\nURL: \(.url)\n\nDescription:\n\(.body)"' || \
+		echo "No releases found or error accessing GitHub"
+
+semver-release: ## Create a semver release tarball with install script
+	@read -p "Enter semver version (e.g., v1.0.0): " VERSION; \
+	if [ -z "$$VERSION" ]; then \
+		echo "Error: Version cannot be empty"; \
+		exit 1; \
+	fi; \
+	echo "Creating release $$VERSION..."; \
+	$(MAKE) git-status; \
+	$(MAKE) build; \
+	mkdir -p release/$$VERSION; \
+	for o in $(GOOS); do \
+	  for a in $(GOARCH); do \
+		RELEASE_DIR="release/$$VERSION/tmp_$${o}_$${a}"; \
+		mkdir -p $$RELEASE_DIR; \
+		cp build/$(COMMIT)/$${o}/$${a}/sh-* $$RELEASE_DIR/; \
+		echo '#!/bin/bash' > $$RELEASE_DIR/install.sh; \
+		echo 'set -e' >> $$RELEASE_DIR/install.sh; \
+		echo '' >> $$RELEASE_DIR/install.sh; \
+		echo '# Install secret-hoard binaries to $$HOME/bin' >> $$RELEASE_DIR/install.sh; \
+		echo 'INSTALL_DIR="$$HOME/bin"' >> $$RELEASE_DIR/install.sh; \
+		echo '' >> $$RELEASE_DIR/install.sh; \
+		echo 'echo "Installing secret-hoard to $$INSTALL_DIR..."' >> $$RELEASE_DIR/install.sh; \
+		echo '' >> $$RELEASE_DIR/install.sh; \
+		echo '# Create directory if it does not exist' >> $$RELEASE_DIR/install.sh; \
+		echo 'mkdir -p "$$INSTALL_DIR"' >> $$RELEASE_DIR/install.sh; \
+		echo '' >> $$RELEASE_DIR/install.sh; \
+		echo '# Get the directory where this script is located' >> $$RELEASE_DIR/install.sh; \
+		echo 'SCRIPT_DIR="$$(cd "$$(dirname "$$0")" && pwd)"' >> $$RELEASE_DIR/install.sh; \
+		echo '' >> $$RELEASE_DIR/install.sh; \
+		echo '# Copy binaries and make them executable' >> $$RELEASE_DIR/install.sh; \
+		echo 'for binary in sh-pull sh-push sh-generate; do' >> $$RELEASE_DIR/install.sh; \
+		echo '  if [ -f "$$SCRIPT_DIR/$$binary" ]; then' >> $$RELEASE_DIR/install.sh; \
+		echo '    echo "  Installing $$binary..."' >> $$RELEASE_DIR/install.sh; \
+		echo '    cp "$$SCRIPT_DIR/$$binary" "$$INSTALL_DIR/"' >> $$RELEASE_DIR/install.sh; \
+		echo '    chmod +x "$$INSTALL_DIR/$$binary"' >> $$RELEASE_DIR/install.sh; \
+		echo '  else' >> $$RELEASE_DIR/install.sh; \
+		echo '    echo "  Warning: $$binary not found"' >> $$RELEASE_DIR/install.sh; \
+		echo '  fi' >> $$RELEASE_DIR/install.sh; \
+		echo 'done' >> $$RELEASE_DIR/install.sh; \
+		echo '' >> $$RELEASE_DIR/install.sh; \
+		echo 'echo ""' >> $$RELEASE_DIR/install.sh; \
+		echo 'echo "Installation complete!"' >> $$RELEASE_DIR/install.sh; \
+		echo 'echo ""' >> $$RELEASE_DIR/install.sh; \
+		echo 'echo "Installed binaries:"' >> $$RELEASE_DIR/install.sh; \
+		echo 'echo "  - $$INSTALL_DIR/sh-pull"' >> $$RELEASE_DIR/install.sh; \
+		echo 'echo "  - $$INSTALL_DIR/sh-push"' >> $$RELEASE_DIR/install.sh; \
+		echo 'echo "  - $$INSTALL_DIR/sh-generate"' >> $$RELEASE_DIR/install.sh; \
+		echo 'echo ""' >> $$RELEASE_DIR/install.sh; \
+		echo 'if echo "$$PATH" | grep -q "$$INSTALL_DIR"; then' >> $$RELEASE_DIR/install.sh; \
+		echo '  echo "$$INSTALL_DIR is in your PATH"' >> $$RELEASE_DIR/install.sh; \
+		echo 'else' >> $$RELEASE_DIR/install.sh; \
+		echo '  echo "NOTE: Add $$INSTALL_DIR to your PATH by adding this to your ~/.bashrc or ~/.zshrc:"' >> $$RELEASE_DIR/install.sh; \
+		echo '  echo \"  export PATH=\$$HOME/bin:\$$PATH\"' >> $$RELEASE_DIR/install.sh; \
+		echo 'fi' >> $$RELEASE_DIR/install.sh; \
+		chmod +x $$RELEASE_DIR/install.sh; \
+		tar -C $$RELEASE_DIR -czf release/$$VERSION/secret-hoard_$$VERSION\_$${o}_$${a}.tar.gz .; \
+		rm -rf $$RELEASE_DIR; \
+		echo "Created release/$$VERSION/secret-hoard_$$VERSION\_$${o}_$${a}.tar.gz"; \
+	  done; \
+	done; \
+	echo ""; \
+	echo "Release $$VERSION created successfully!"; \
+	echo "Release files:"; \
+	ls -lh release/$$VERSION/; \
+	echo ""; \
+	if command -v gh >/dev/null 2>&1; then \
+		read -p "Create GitHub release? (y/N): " CREATE_GH; \
+		if [ "$$CREATE_GH" = "y" ] || [ "$$CREATE_GH" = "Y" ]; then \
+			echo ""; \
+			read -p "Enter release title (default: $$VERSION): " TITLE; \
+			if [ -z "$$TITLE" ]; then \
+				TITLE="$$VERSION"; \
+			fi; \
+			echo ""; \
+			echo "Enter release notes (Ctrl-D when done):"; \
+			NOTES=$$(cat); \
+			if [ -z "$$NOTES" ]; then \
+				NOTES="Release $$VERSION"; \
+			fi; \
+			echo ""; \
+			echo "Creating GitHub release..."; \
+			gh release create "$$VERSION" \
+				release/$$VERSION/*.tar.gz \
+				--title "$$TITLE" \
+				--notes "$$NOTES"; \
+			echo "GitHub release created!"; \
+			echo "View at: $$(gh release view $$VERSION --json url -q .url)"; \
+		fi; \
+	else \
+		echo "Note: Install gh CLI to create GitHub releases automatically"; \
+		echo "  https://cli.github.com/"; \
+	fi
+
 release: git-status build
 	mkdir -p release/$(COMMIT)
 	@for o in $(GOOS); do \
@@ -108,4 +214,4 @@ download: ## download biometric aware ssl cert tarball
 upload: ## upload biometric aware ssl tarball
 	bash scripts/upload.sh
 
-.PHONY: build release static vet lint fmt gocyclo goimports test ${EXECUTABLES}
+.PHONY: build release semver-release check-release static vet lint fmt gocyclo goimports test ${EXECUTABLES}
