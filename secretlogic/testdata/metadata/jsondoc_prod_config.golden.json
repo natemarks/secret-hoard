@@ -1,0 +1,5 @@
+{
+  "access": "config",
+  "environment": "prod",
+  "resourceType": "jsondoc"
+}

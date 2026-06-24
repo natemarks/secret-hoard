@@ -12,14 +12,14 @@ import (
 
 // Config is the configuration for the sh-pull command
 type Config struct {
-	Type       string
-	Env        string
-	Access     string
-	Instance   string
-	Database   string
-	Warehouse  string
-	CommonName string
-	Debug      bool
+	Type        string
+	Env         string
+	Access      string
+	Instance    string
+	Database    string
+	Warehouse   string
+	CommonName  string
+	Debug       bool
 	Interactive bool
 }
 

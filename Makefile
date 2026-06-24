@@ -79,7 +79,16 @@ godeadcode: ## unreachable code check
 govulncheck: # run cyclomatic complexity check
 	go install golang.org/x/vuln/cmd/govulncheck@latest
 	govulncheck ./...
-static: goimports fmt vet lint gocyclo godeadcode govulncheck test
+unittest: ## run unit tests (no external dependencies)
+	@go test -v ./secretlogic/...
+
+unittest-update: ## update golden files for unit tests
+	@go test -v ./secretlogic/... -update
+
+unittest-coverage: ## run unit tests with coverage report
+	@go test -cover ./secretlogic/...
+
+static: unittest goimports fmt vet lint gocyclo godeadcode govulncheck test ## run all static checks including unit tests
 
 clean:
 	-@rm ${OUT} ${OUT}-v*
