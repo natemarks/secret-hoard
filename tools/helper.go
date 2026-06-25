@@ -4,14 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 )
 
 // GetSecretValue retrieves the value of a secret
 func GetSecretValue(secretID string) (string, error) {
-	// Load AWS SDK configuration
-	cfg, err := config.LoadDefaultConfig(context.TODO())
+	// Load AWS SDK configuration with region fallback
+	cfg, err := LoadAWSConfig(context.TODO())
 	if err != nil {
 		return "", err
 	}
