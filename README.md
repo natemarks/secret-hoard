@@ -170,6 +170,11 @@ Download secret contents directly to files for use in scripts. Outputs absolute 
 
 **Supported types:** jsondoc, textfile, sslcert
 
+**Secret ID Formats:**
+- User-friendly: `textfile/`, `sslcert/` (recommended)
+- AWS native: `text_file/`, `ssl_certificate/` (also supported)
+- Both formats work identically - the tool normalizes automatically
+
 **Usage:**
 ```bash
 sh-contents <secret-id> <target-directory>
@@ -195,6 +200,10 @@ $ sudo sh-contents sslcert/prod/example.com /etc/ssl
 $ ls -la /etc/ssl/sslcert.prod.example.com.*
 -rw-r--r-- 1 root root 1234 Jun 25 10:00 /etc/ssl/sslcert.prod.example.com.crt
 -rw------- 1 root root 1679 Jun 25 10:00 /etc/ssl/sslcert.prod.example.com.key
+
+# Note: AWS formats also work (automatically normalized)
+$ sh-contents text_file/prod/api-key /tmp
+$ sh-contents ssl_certificate/prod/example.com /etc/ssl
 ```
 
 **Bash scripting:**
@@ -215,6 +224,18 @@ ssl_certificate ${CERT}.crt;
 ssl_certificate_key ${CERT}.key;
 EOF
 ```
+
+**Format Flexibility:**
+
+The `sh-contents` command accepts secret IDs in either user-friendly or AWS-native formats:
+
+| Type | User-Friendly | AWS Format | Both Work |
+|------|---------------|------------|-----------|
+| Text File | `textfile/` | `text_file/` | ✅ |
+| SSL Certificate | `sslcert/` | `ssl_certificate/` | ✅ |
+| JSON Document | `jsondoc/` | `jsondoc/` | N/A (same) |
+
+The tool automatically normalizes to AWS format before API calls. Use whichever format you prefer - they work identically.
 
 **SSL Certificate Security:**
 - Certificate file (`.crt`): 644 permissions (world-readable)

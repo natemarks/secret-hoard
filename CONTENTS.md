@@ -172,12 +172,79 @@ Auto-complete secret IDs and paths for better UX.
 
 ---
 
+## Secret ID Format Reference
+
+The `sh-contents` command accepts secret IDs in user-friendly or AWS-native formats.
+
+### Supported Formats
+
+| Type | User-Friendly | AWS Format | Normalized To | Example |
+|------|---------------|------------|---------------|---------|
+| JSON Document | `jsondoc/` | `jsondoc/` | `jsondoc/` | `jsondoc/dev/app-config` |
+| Text File | `textfile/` | `text_file/` | `text_file/` | `textfile/prod/api-key` |
+| SSL Certificate | `sslcert/` | `ssl_certificate/` | `ssl_certificate/` | `sslcert/prod/example.com` |
+
+### Format Structure
+
+**JSON Document:**
+```
+jsondoc/<env>/<access>
+  <env>: Environment (dev, prod, staging, etc.)
+  <access>: Access identifier (app-config, db-creds, etc.)
+```
+
+**Text File:**
+```
+textfile/<env>/<access>  OR  text_file/<env>/<access>
+  <env>: Environment (dev, prod, staging, etc.)
+  <access>: Access identifier (api-key, token, etc.)
+```
+
+**SSL Certificate:**
+```
+sslcert/<env>/<commonName>  OR  ssl_certificate/<env>/<commonName>
+  <env>: Environment (dev, prod, staging, etc.)
+  <commonName>: Domain name (example.com, *.example.com, etc.)
+```
+
+### Normalization Behavior
+
+The tool automatically normalizes user-friendly formats to AWS formats:
+- **Input:** `textfile/dev/api-key` → **AWS Call:** `text_file/dev/api-key`
+- **Input:** `text_file/dev/api-key` → **AWS Call:** `text_file/dev/api-key`
+- **Input:** `sslcert/prod/example.com` → **AWS Call:** `ssl_certificate/prod/example.com`
+- **Input:** `ssl_certificate/prod/example.com` → **AWS Call:** `ssl_certificate/prod/example.com`
+
+Users can use either format interchangeably - both work identically.
+
+---
+
 ## Architectural Issues Found
 
 ### Issue 1: Secret ID Normalization 🔴
-**Problem:** User types `textfile/` but AWS expects `text_file/`
+**Problem:** User types `textfile/` or `sslcert/` but AWS expects `text_file/` or `ssl_certificate/`
 
-**Solution:** Implemented `NormalizeSecretID()` in secretlogic package
+**Solution:** Implemented `NormalizeSecretID()` in secretlogic package that transparently converts:
+- `textfile/` → `text_file/` (both formats accepted)
+- `sslcert/` → `ssl_certificate/` (both formats accepted)
+- `jsondoc/` → unchanged (no normalization needed)
+
+**Implementation Details:**
+- Users can use either format interchangeably
+- Normalization happens automatically before AWS API calls
+- Error messages use the user-friendly format in examples
+- Both formats work identically
+
+**User Impact:**
+```bash
+# Both work the same:
+sh-contents textfile/dev/api-key /tmp
+sh-contents text_file/dev/api-key /tmp
+
+# Both work the same:
+sh-contents sslcert/prod/example.com /etc/ssl
+sh-contents ssl_certificate/prod/example.com /etc/ssl
+```
 
 **Status:** ✅ FIXED (Priority 1)
 
@@ -274,6 +341,11 @@ Auto-complete secret IDs and paths for better UX.
 - `Makefile` - Added sh-contents to EXECUTABLES
 - `README.md` - Added sh-contents documentation
 
+### Modified Files (Priority 2)
+- `contents/contents.go` - Refactored with secretWriter helper, improved error messages
+- `secretlogic/contents.go` - Enhanced error messages with format examples
+- `README.md` - Documented format normalization feature and flexibility
+
 ---
 
 ## Next Steps
@@ -299,6 +371,8 @@ Auto-complete secret IDs and paths for better UX.
 2. **Test-Driven:** Writing tests revealed design issues that needed fixing
 3. **Reuse Patterns:** secretlogic package should be the single source of truth for secret operations
 4. **Documentation:** Clear examples in error messages significantly improve UX
+5. **Format Normalization:** Supporting both user-friendly (`textfile`) and AWS-native (`text_file`) formats improves usability without complexity - automatic normalization is transparent to users
+6. **Error Context:** Rich error messages with remediation steps reduce support burden and improve user experience significantly
 
 ---
 
