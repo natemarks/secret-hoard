@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/natemarks/secret-hoard/jsondoc"
+	"github.com/natemarks/secret-hoard/secretlogic"
 	"github.com/natemarks/secret-hoard/sslcert"
 	"github.com/natemarks/secret-hoard/textfile"
 	"github.com/natemarks/secret-hoard/tools"
@@ -40,14 +41,11 @@ func WriteSecretContents(secretID, targetDir string, log *tools.Logger) ([]strin
 }
 
 func writeJSONDocContents(secretID, targetDir string, log *tools.Logger) ([]string, error) {
-	// Parse secretID: jsondoc/env/access
-	parts := strings.Split(secretID, "/")
-	if len(parts) != 3 {
-		return nil, fmt.Errorf("invalid jsondoc secret ID: %s (expected: jsondoc/env/access)", secretID)
+	// Parse secretID using secretlogic
+	env, access, err := secretlogic.ParseJSONDocSecretID(secretID)
+	if err != nil {
+		return nil, err
 	}
-
-	env := parts[1]
-	access := parts[2]
 
 	// Fetch secret from AWS
 	log.Info("Fetching secret: %s", secretID)
@@ -63,8 +61,8 @@ func writeJSONDocContents(secretID, targetDir string, log *tools.Logger) ([]stri
 		return nil, fmt.Errorf("error parsing secret data: %w", err)
 	}
 
-	// Build filename: jsondoc.env.access.contents.json
-	filename := fmt.Sprintf("jsondoc.%s.%s.contents.json", env, access)
+	// Build filename using secretlogic
+	filename := secretlogic.BuildContentsFilename("jsondoc", env, access, "")
 	filePath := filepath.Join(targetDir, filename)
 
 	// Write contents file
@@ -84,17 +82,14 @@ func writeJSONDocContents(secretID, targetDir string, log *tools.Logger) ([]stri
 }
 
 func writeTextFileContents(secretID, targetDir string, log *tools.Logger) ([]string, error) {
-	// Normalize secret ID to use text_file
-	secretID = strings.Replace(secretID, "textfile/", "text_file/", 1)
-
-	// Parse secretID: text_file/env/access
-	parts := strings.Split(secretID, "/")
-	if len(parts) != 3 {
-		return nil, fmt.Errorf("invalid textfile secret ID: %s (expected: textfile/env/access)", secretID)
+	// Parse secretID using secretlogic (handles normalization internally)
+	env, access, err := secretlogic.ParseTextFileSecretID(secretID)
+	if err != nil {
+		return nil, err
 	}
 
-	env := parts[1]
-	access := parts[2]
+	// Normalize for AWS API call
+	secretID = secretlogic.NormalizeSecretID(secretID)
 
 	// Fetch secret from AWS
 	log.Info("Fetching secret: %s", secretID)
@@ -110,8 +105,8 @@ func writeTextFileContents(secretID, targetDir string, log *tools.Logger) ([]str
 		return nil, fmt.Errorf("error parsing secret data: %w", err)
 	}
 
-	// Build filename: textfile.env.access.contents.txt
-	filename := fmt.Sprintf("textfile.%s.%s.contents.txt", env, access)
+	// Build filename using secretlogic
+	filename := secretlogic.BuildContentsFilename("textfile", env, access, "")
 	filePath := filepath.Join(targetDir, filename)
 
 	// Write contents file
@@ -131,17 +126,14 @@ func writeTextFileContents(secretID, targetDir string, log *tools.Logger) ([]str
 }
 
 func writeSSLCertContents(secretID, targetDir string, log *tools.Logger) ([]string, error) {
-	// Normalize secret ID to use ssl_certificate
-	secretID = strings.Replace(secretID, "sslcert/", "ssl_certificate/", 1)
-
-	// Parse secretID: ssl_certificate/env/commonName
-	parts := strings.Split(secretID, "/")
-	if len(parts) != 3 {
-		return nil, fmt.Errorf("invalid sslcert secret ID: %s (expected: sslcert/env/commonname)", secretID)
+	// Parse secretID using secretlogic (handles normalization internally)
+	env, commonName, err := secretlogic.ParseSSLCertSecretID(secretID)
+	if err != nil {
+		return nil, err
 	}
 
-	env := parts[1]
-	commonName := parts[2]
+	// Normalize for AWS API call
+	secretID = secretlogic.NormalizeSecretID(secretID)
 
 	// Fetch secret from AWS
 	log.Info("Fetching secret: %s", secretID)
@@ -157,10 +149,8 @@ func writeSSLCertContents(secretID, targetDir string, log *tools.Logger) ([]stri
 		return nil, fmt.Errorf("error parsing secret data: %w", err)
 	}
 
-	// Build filenames: sslcert.env.commonname.crt and .key
-	certFilename := fmt.Sprintf("sslcert.%s.%s.crt", env, commonName)
-	keyFilename := fmt.Sprintf("sslcert.%s.%s.key", env, commonName)
-
+	// Build filenames using secretlogic
+	certFilename, keyFilename := secretlogic.BuildSSLCertFilenames(env, commonName)
 	certPath := filepath.Join(targetDir, certFilename)
 	keyPath := filepath.Join(targetDir, keyFilename)
 
@@ -190,7 +180,8 @@ func writeSSLCertContents(secretID, targetDir string, log *tools.Logger) ([]stri
 	}
 
 	// Return the base path without extension so scripts can easily append .crt or .key
-	basePath := filepath.Join(targetDir, fmt.Sprintf("sslcert.%s.%s", env, commonName))
+	baseName := secretlogic.BuildContentsFilename("sslcert", env, "", commonName)
+	basePath := filepath.Join(targetDir, baseName)
 	absBasePath, err := filepath.Abs(basePath)
 	if err != nil {
 		return nil, fmt.Errorf("error resolving base path: %w", err)
