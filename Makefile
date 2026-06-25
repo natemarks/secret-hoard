@@ -142,13 +142,7 @@ semver-release: ## Create a semver release tarball with install script
 		echo "  https://cli.github.com/"; \
 	fi
 
-release: git-status build
-	mkdir -p release/$(COMMIT)
-	@for o in $(GOOS); do \
-	  for a in $(GOARCH); do \
-        tar -C ./build/$(COMMIT)/$${o}/$${a} -czvf release/$(COMMIT)/secret-hoard_$(COMMIT)_$${o}_$${a}.tar.gz . ; \
-	  done \
-    done ; \
+ \
 
 shellcheck: ## use black to format python files
 	( \
@@ -215,4 +209,4 @@ download: ## download biometric aware ssl cert tarball
 upload: ## upload biometric aware ssl tarball
 	bash scripts/upload.sh
 
-.PHONY: build release semver-release check-release static vet lint fmt gocyclo goimports test ${EXECUTABLES}
+.PHONY: build semver-release check-release static vet lint fmt gocyclo goimports test ${EXECUTABLES}

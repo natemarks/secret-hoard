@@ -580,6 +580,16 @@ done
 
 ---
 
+## Release Process
+
+See [RELEASE.md](RELEASE.md) for instructions on creating and publishing releases.
+
+Quick start:
+```bash
+make semver-release  # Create semantic version release
+make check-release   # View latest published release
+```
+
 ## Contributing
 
 See [CLEANUP.md](CLEANUP.md) for planned improvements and contribution opportunities.
