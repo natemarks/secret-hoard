@@ -9,8 +9,6 @@ import (
 )
 
 func main() {
-	fmt.Fprintf(os.Stderr, "sh-contents version: %s\n", version.GetVersion())
-
 	cfg, err := GetConfig()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Configuration error: %v\n", err)
@@ -18,7 +16,12 @@ func main() {
 	}
 
 	log := cfg.GetLogger()
-	log.Debug("config: %+v", cfg)
+
+	// Only show version in debug mode
+	if cfg.Debug {
+		fmt.Fprintf(os.Stderr, "sh-contents version: %s\n", version.GetVersion())
+		log.Debug("config: %+v", cfg)
+	}
 
 	paths, err := contents.WriteSecretContents(cfg.SecretID, cfg.TargetDir, log)
 	if err != nil {

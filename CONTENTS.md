@@ -399,6 +399,16 @@ sh-contents ssl_certificate/prod/example.com /etc/ssl
   - `TestVerifyFileChecksum` - Tests verification logic
   - `TestVerifyFileChecksum_FileNotFound` - Tests error handling
 
+### Modified Files (Output Simplification)
+- `cmd/sh-contents/main.go` - Version output only in debug mode
+- `tools/logger.go` - Info() messages only in debug mode
+- `README.md` - Updated with output mode documentation
+
+**Output Behavior:**
+- **Normal mode:** Only prints absolute file path(s) to stdout - ideal for scripting
+- **Debug mode (-debug):** Shows version, progress, and debug information
+- **Errors:** Always printed to stderr regardless of mode
+
 ---
 
 ## Next Steps
@@ -528,6 +538,50 @@ Recommendation: Do not use this file - retry the operation
 - Automatic - no user configuration required
 - Minimal performance impact (~1-2ms per file)
 - Clear error messages showing expected vs actual checksums
+
+### Output Simplification (Usability Enhancement)
+
+**Problem:** Original output was verbose and required filtering for script use:
+```bash
+# Old behavior - required 2>/dev/null to filter
+$ sh-contents textfile/dev/api-key /tmp 2>/dev/null
+sh-contents version: abc123
+Fetching secret: text_file/dev/api-key
+Writing to: /tmp/textfile.dev.api-key.contents.txt
+Successfully wrote textfile contents
+/tmp/textfile.dev.api-key.contents.txt
+```
+
+**Solution:** Minimal output by default, verbose output only with -debug flag:
+```bash
+# New behavior - clean output for scripts
+$ sh-contents textfile/dev/api-key /tmp
+/tmp/textfile.dev.api-key.contents.txt
+
+# Debug mode when needed
+$ sh-contents -debug textfile/dev/api-key /tmp
+sh-contents version: abc123
+Fetching secret: text_file/dev/api-key
+Writing to: /tmp/textfile.dev.api-key.contents.txt
+Successfully wrote textfile contents
+/tmp/textfile.dev.api-key.contents.txt
+```
+
+**Implementation:**
+- Version output only shown in debug mode
+- Logger.Info() respects debug flag (only logs when debug enabled)
+- Logger.Error() always shows (errors must be visible)
+- Stdout contains only file paths (script-friendly)
+- Stderr contains version/progress (when debug) and errors (always)
+
+**Benefit:** Clean scripting without `2>/dev/null` filtering:
+```bash
+# Before: needed to filter stderr
+CONFIG=$(sh-contents jsondoc/dev/config /tmp 2>/dev/null)
+
+# After: clean output by default
+CONFIG=$(sh-contents jsondoc/dev/config /tmp)
+```
 
 ### Next Steps
 **Priority 3 (Nice to Have)** features available:

@@ -30,9 +30,11 @@ func (l *Logger) Debug(format string, v ...any) {
 	}
 }
 
-// Info logs an informational message
+// Info logs an informational message (only if debug mode enabled)
 func (l *Logger) Info(format string, v ...any) {
-	l.info.Printf(format, v...)
+	if l.isDebug {
+		l.info.Printf(format, v...)
+	}
 }
 
 // Error logs an error message

@@ -177,15 +177,29 @@ Download secret contents directly to files for use in scripts. Outputs absolute 
 
 **Usage:**
 ```bash
-sh-contents <secret-id> <target-directory>
+sh-contents [OPTIONS] <secret-id> <target-directory>
 ```
+
+**Options:**
+- `-debug` - Show verbose output (version, progress, debug info)
+
+**Output Modes:**
+- **Normal mode (default):** Prints only the absolute path(s) to stdout - perfect for scripts
+- **Debug mode (-debug):** Shows version, progress messages, and paths
 
 **Examples:**
 
 ```bash
-# JSON Document - outputs single file path
+# Normal mode - minimal output (only path)
 $ sh-contents jsondoc/dev/app-config /tmp
+/tmp/jsondoc.dev.app-config.contents.json
+
+# Debug mode - verbose output
+$ sh-contents -debug jsondoc/dev/app-config /tmp
 sh-contents version: abc123
+Fetching secret: jsondoc/dev/app-config
+Writing to: /tmp/jsondoc.dev.app-config.contents.json
+Successfully wrote jsondoc contents
 /tmp/jsondoc.dev.app-config.contents.json
 
 # Text File - outputs single file path
@@ -208,21 +222,31 @@ $ sh-contents ssl_certificate/prod/example.com /etc/ssl
 
 **Bash scripting:**
 
+The minimal output mode makes scripting simple - just capture the path:
+
 ```bash
-# JSON config
-CONFIG=$(sh-contents jsondoc/dev/app-config /tmp 2>/dev/null)
+# JSON config - no need to filter stderr, output is already clean
+CONFIG=$(sh-contents jsondoc/dev/app-config /tmp)
 cat "$CONFIG"
 
-# Text file
-API_KEY=$(sh-contents textfile/prod/api-key /tmp 2>/dev/null)
-export API_KEY=$(cat "$API_KEY")
+# Text file content
+API_KEY_FILE=$(sh-contents textfile/prod/api-key /tmp)
+export API_KEY=$(cat "$API_KEY_FILE")
 
 # SSL certificate - append extensions
-CERT=$(sudo sh-contents sslcert/prod/example.com /etc/nginx/ssl 2>/dev/null)
+CERT=$(sudo sh-contents sslcert/prod/example.com /etc/nginx/ssl)
 cat > /etc/nginx/conf.d/ssl.conf <<EOF
 ssl_certificate ${CERT}.crt;
 ssl_certificate_key ${CERT}.key;
 EOF
+
+# Error handling
+if CONFIG=$(sh-contents jsondoc/dev/app-config /tmp 2>/dev/null); then
+    echo "Success: $CONFIG"
+else
+    echo "Failed to fetch secret" >&2
+    exit 1
+fi
 ```
 
 **Format Flexibility:**
