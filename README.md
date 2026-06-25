@@ -23,7 +23,7 @@ Each secret is tagged with metadata and stored in a consistent format for easy r
 
 ## Commands
 
-secret-hoard provides 3 commands that work for all secret types:
+secret-hoard provides 4 commands that work for all secret types:
 
 ---
 
@@ -161,6 +161,72 @@ sh-push -metadata=~/.secret-hoard/jsondoc.dev.app-config.metadata.json
 #
 # Secret updated successfully: jsondoc/dev/app-config
 ```
+
+---
+
+### sh-contents - Download Secret Contents
+
+Download secret contents directly to files for use in scripts. Outputs absolute paths to stdout for easy scripting.
+
+**Supported types:** jsondoc, textfile, sslcert
+
+**Usage:**
+```bash
+sh-contents <secret-id> <target-directory>
+```
+
+**Examples:**
+
+```bash
+# JSON Document - outputs single file path
+$ sh-contents jsondoc/dev/app-config /tmp
+sh-contents version: abc123
+/tmp/jsondoc.dev.app-config.contents.json
+
+# Text File - outputs single file path
+$ sh-contents textfile/prod/api-key /tmp
+/tmp/textfile.prod.api-key.contents.txt
+
+# SSL Certificate - outputs base path (append .crt or .key)
+$ sudo sh-contents sslcert/prod/example.com /etc/ssl
+/etc/ssl/sslcert.prod.example.com
+
+# Files created on disk:
+$ ls -la /etc/ssl/sslcert.prod.example.com.*
+-rw-r--r-- 1 root root 1234 Jun 25 10:00 /etc/ssl/sslcert.prod.example.com.crt
+-rw------- 1 root root 1679 Jun 25 10:00 /etc/ssl/sslcert.prod.example.com.key
+```
+
+**Bash scripting:**
+
+```bash
+# JSON config
+CONFIG=$(sh-contents jsondoc/dev/app-config /tmp 2>/dev/null)
+cat "$CONFIG"
+
+# Text file
+API_KEY=$(sh-contents textfile/prod/api-key /tmp 2>/dev/null)
+export API_KEY=$(cat "$API_KEY")
+
+# SSL certificate - append extensions
+CERT=$(sudo sh-contents sslcert/prod/example.com /etc/nginx/ssl 2>/dev/null)
+cat > /etc/nginx/conf.d/ssl.conf <<EOF
+ssl_certificate ${CERT}.crt;
+ssl_certificate_key ${CERT}.key;
+EOF
+```
+
+**SSL Certificate Security:**
+- Certificate file (`.crt`): 644 permissions (world-readable)
+- Private key file (`.key`): 600 permissions (owner-only)
+- If run as root: files owned by root:root
+- Private keys are automatically secured with restrictive permissions
+
+**Key differences from sh-pull:**
+- sh-pull: Downloads to `~/.secret-hoard/` for editing
+- sh-contents: Downloads to specified directory for immediate use
+- sh-contents: Designed for automation and scripts
+- sh-contents: Outputs paths to stdout (stderr for logs)
 
 ---
 
@@ -334,10 +400,10 @@ All commands use `~/.secret-hoard/` as the default working directory for local f
 make build
 
 # Or build individually
-go build -o bin/sh-upload ./cmd/sh-upload
 go build -o bin/sh-pull ./cmd/sh-pull
 go build -o bin/sh-push ./cmd/sh-push
 go build -o bin/sh-generate ./cmd/sh-generate
+go build -o bin/sh-contents ./cmd/sh-contents
 
 # Add to PATH
 export PATH=$PATH:$(pwd)/bin
@@ -374,19 +440,19 @@ make static
 ```
 secret-hoard/
 ├── cmd/                    # Command-line executables
-│   ├── sh-upload/         # Batch CSV upload
 │   ├── sh-pull/           # Interactive/flag download
 │   ├── sh-push/           # Upload with diff
-│   └── sh-generate/       # Scaffolding generator
+│   ├── sh-generate/       # Scaffolding generator
+│   └── sh-contents/       # Download contents for scripts
 ├── jsondoc/               # JSON document secret type
 ├── rdspostgres/           # RDS PostgreSQL secret type
 ├── snowflake/             # Snowflake secret type
 ├── sslcert/               # SSL certificate secret type
 ├── textfile/              # Text file secret type
+├── contents/              # Contents download logic
 ├── pull/                  # Pull logic
 ├── push/                  # Push logic
 ├── generate/              # Generation logic
-├── uploader/              # CSV upload logic
 ├── secretlogic/           # Pure business logic (testable)
 └── tools/                 # Shared utilities
 ```
