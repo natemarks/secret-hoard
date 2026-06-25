@@ -29,7 +29,11 @@ func NormalizeSecretID(secretID string) string {
 func ParseJSONDocSecretID(secretID string) (env, access string, err error) {
 	parts := strings.Split(secretID, "/")
 	if len(parts) != 3 {
-		return "", "", fmt.Errorf("invalid jsondoc secret ID: %s (expected: jsondoc/<env>/<access>)", secretID)
+		return "", "", fmt.Errorf("invalid jsondoc secret ID: %s\n"+
+			"Expected format: jsondoc/<env>/<access>\n"+
+			"  <env>: Environment (e.g., dev, prod, staging)\n"+
+			"  <access>: Access identifier (e.g., app-config, db-creds)\n"+
+			"Example: jsondoc/dev/app-config", secretID)
 	}
 	return parts[1], parts[2], nil
 }
@@ -42,7 +46,11 @@ func ParseTextFileSecretID(secretID string) (env, access string, err error) {
 
 	parts := strings.Split(secretID, "/")
 	if len(parts) != 3 {
-		return "", "", fmt.Errorf("invalid textfile secret ID: %s (expected: textfile/<env>/<access>)", secretID)
+		return "", "", fmt.Errorf("invalid textfile secret ID: %s\n"+
+			"Expected format: textfile/<env>/<access>\n"+
+			"  <env>: Environment (e.g., dev, prod, staging)\n"+
+			"  <access>: Access identifier (e.g., api-key, token)\n"+
+			"Example: textfile/prod/api-key", secretID)
 	}
 	return parts[1], parts[2], nil
 }
@@ -55,7 +63,11 @@ func ParseSSLCertSecretID(secretID string) (env, commonName string, err error) {
 
 	parts := strings.Split(secretID, "/")
 	if len(parts) != 3 {
-		return "", "", fmt.Errorf("invalid sslcert secret ID: %s (expected: sslcert/<env>/<commonName>)", secretID)
+		return "", "", fmt.Errorf("invalid sslcert secret ID: %s\n"+
+			"Expected format: sslcert/<env>/<commonName>\n"+
+			"  <env>: Environment (e.g., dev, prod, staging)\n"+
+			"  <commonName>: Domain name (e.g., example.com, *.example.com)\n"+
+			"Example: sslcert/prod/example.com", secretID)
 	}
 	return parts[1], parts[2], nil
 }
