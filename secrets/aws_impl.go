@@ -7,9 +7,9 @@ import (
 	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager/types"
+	"github.com/natemarks/secret-hoard/tools"
 )
 
 // AWSSecretsManager implements Manager using AWS SDK
@@ -19,7 +19,7 @@ type AWSSecretsManager struct {
 
 // NewAWSSecretsManager creates a new AWS Secrets Manager client
 func NewAWSSecretsManager() (*AWSSecretsManager, error) {
-	cfg, err := config.LoadDefaultConfig(context.Background())
+	cfg, err := tools.LoadAWSConfig(context.Background())
 	if err != nil {
 		return nil, fmt.Errorf("unable to load AWS SDK config: %w", err)
 	}
