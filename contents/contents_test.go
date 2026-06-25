@@ -3,6 +3,7 @@ package contents
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/natemarks/secret-hoard/tools"
@@ -140,5 +141,112 @@ func TestWriteSecretContents_InvalidSecretID(t *testing.T) {
 				t.Errorf("WriteSecretContents() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
+	}
+}
+
+func TestCalculateChecksum(t *testing.T) {
+	tests := []struct {
+		name    string
+		content string
+		want    string
+	}{
+		{
+			name:    "empty string",
+			content: "",
+			want:    "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+		},
+		{
+			name:    "simple string",
+			content: "hello world",
+			want:    "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9",
+		},
+		{
+			name:    "json content",
+			content: `{"key": "value"}`,
+			want:    "9724c1e20e6e3e4d7f57ed25f9d4efb006e508590d528c90da597f6a775c13e5",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := calculateChecksum(tt.content)
+			if got != tt.want {
+				t.Errorf("calculateChecksum() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestVerifyFileChecksum(t *testing.T) {
+	log := tools.NewLogger(false)
+	tmpDir := t.TempDir()
+
+	tests := []struct {
+		name            string
+		fileContent     string
+		expectedContent string
+		wantErr         bool
+	}{
+		{
+			name:            "matching content",
+			fileContent:     "test content",
+			expectedContent: "test content",
+			wantErr:         false,
+		},
+		{
+			name:            "mismatched content",
+			fileContent:     "actual content",
+			expectedContent: "expected content",
+			wantErr:         true,
+		},
+		{
+			name:            "empty content matches",
+			fileContent:     "",
+			expectedContent: "",
+			wantErr:         false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create temp file with actual content
+			tmpFile := filepath.Join(tmpDir, tt.name+".txt")
+			err := os.WriteFile(tmpFile, []byte(tt.fileContent), 0644)
+			if err != nil {
+				t.Fatalf("failed to create test file: %v", err)
+			}
+
+			// Verify against expected content
+			err = verifyFileChecksum(tmpFile, tt.expectedContent, log)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("verifyFileChecksum() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			// If error expected, verify it contains checksum info
+			if tt.wantErr && err != nil {
+				errMsg := err.Error()
+				if !strings.Contains(errMsg, "SHA256") {
+					t.Errorf("error message should contain SHA256 checksums, got: %v", errMsg)
+				}
+				if !strings.Contains(errMsg, "Expected") || !strings.Contains(errMsg, "Actual") {
+					t.Errorf("error message should show expected vs actual, got: %v", errMsg)
+				}
+			}
+		})
+	}
+}
+
+func TestVerifyFileChecksum_FileNotFound(t *testing.T) {
+	log := tools.NewLogger(false)
+	tmpDir := t.TempDir()
+	nonExistentFile := filepath.Join(tmpDir, "does-not-exist.txt")
+
+	err := verifyFileChecksum(nonExistentFile, "content", log)
+	if err == nil {
+		t.Error("verifyFileChecksum() should error when file does not exist")
+	}
+
+	if !strings.Contains(err.Error(), "cannot read file") {
+		t.Errorf("error should indicate file read failure, got: %v", err)
 	}
 }

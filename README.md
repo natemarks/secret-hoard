@@ -237,6 +237,22 @@ The `sh-contents` command accepts secret IDs in either user-friendly or AWS-nati
 
 The tool automatically normalizes to AWS format before API calls. Use whichever format you prefer - they work identically.
 
+**Data Integrity:**
+
+Every file written by `sh-contents` is automatically verified using SHA256 checksums:
+- Checksum calculated before writing
+- File written to disk
+- Checksum verified after writing
+- Operation fails with exit code 1 if corruption detected
+
+This protects against:
+- Disk corruption or hardware failures
+- Filesystem issues
+- Partial writes due to disk space issues
+- Concurrent modification
+
+If verification fails, the error shows both expected and actual checksums for debugging.
+
 **SSL Certificate Security:**
 - Certificate file (`.crt`): 644 permissions (world-readable)
 - Private key file (`.key`): 600 permissions (owner-only)

@@ -1,6 +1,8 @@
 package contents
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -73,6 +75,46 @@ func (w *secretWriter) fetchAndParse() (string, error) {
 	return secretValue, nil
 }
 
+// calculateChecksum computes SHA256 checksum of content
+func calculateChecksum(content string) string {
+	hash := sha256.Sum256([]byte(content))
+	return hex.EncodeToString(hash[:])
+}
+
+// verifyFileChecksum verifies that the file content matches the expected checksum
+func verifyFileChecksum(filePath, expectedContent string, log *tools.Logger) error {
+	// Calculate expected checksum
+	expectedChecksum := calculateChecksum(expectedContent)
+
+	// Read file and calculate actual checksum
+	actualBytes, err := os.ReadFile(filePath)
+	if err != nil {
+		return fmt.Errorf("verification failed - cannot read file: %w\n"+
+			"Path: %s\n"+
+			"This indicates the file may not have been written correctly", err, filePath)
+	}
+
+	actualChecksum := calculateChecksum(string(actualBytes))
+
+	// Compare checksums
+	if actualChecksum != expectedChecksum {
+		return fmt.Errorf("verification failed - file content corruption detected\n"+
+			"Path: %s\n"+
+			"Expected SHA256: %s\n"+
+			"Actual SHA256:   %s\n"+
+			"Possible causes:\n"+
+			"  - Disk corruption or hardware failure\n"+
+			"  - Filesystem issues\n"+
+			"  - Concurrent modification by another process\n"+
+			"  - Out of disk space during write (partial write)\n"+
+			"Recommendation: Do not use this file - retry the operation",
+			filePath, expectedChecksum, actualChecksum)
+	}
+
+	log.Debug("Verification passed: %s (SHA256: %s)", filePath, actualChecksum)
+	return nil
+}
+
 // writeFile writes content to a file with better error messages
 func (w *secretWriter) writeFile(content, filePath string, perm os.FileMode) error {
 	w.log.Info("Writing to: %s", filePath)
@@ -87,6 +129,23 @@ func (w *secretWriter) writeFile(content, filePath string, perm os.FileMode) err
 			"  - Path is a directory not a file",
 			err, filePath, w.targetDir, os.Args[0], filepath.Dir(filePath))
 	}
+	return nil
+}
+
+// writeAndVerifyFile writes content and verifies it was written correctly
+func (w *secretWriter) writeAndVerifyFile(content, filePath string, perm os.FileMode) error {
+	// Write the file
+	err := w.writeFile(content, filePath, perm)
+	if err != nil {
+		return err
+	}
+
+	// Verify the file content
+	err = verifyFileChecksum(filePath, content, w.log)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -115,11 +174,11 @@ func writeJSONDocContents(secretID, targetDir string, log *tools.Logger) ([]stri
 			"The secret value must be valid JSON in jsondoc format", err, secretID)
 	}
 
-	// Build filename and write
+	// Build filename and write with verification
 	filename := secretlogic.BuildContentsFilename("jsondoc", env, access, "")
 	filePath := filepath.Join(targetDir, filename)
 
-	err = writer.writeFile(data.JSONContents, filePath, 0644)
+	err = writer.writeAndVerifyFile(data.JSONContents, filePath, 0644)
 	if err != nil {
 		return nil, err
 	}
@@ -160,11 +219,11 @@ func writeTextFileContents(secretID, targetDir string, log *tools.Logger) ([]str
 			"The secret value must be valid JSON in textfile format", err, secretID)
 	}
 
-	// Build filename and write
+	// Build filename and write with verification
 	filename := secretlogic.BuildContentsFilename("textfile", env, access, "")
 	filePath := filepath.Join(targetDir, filename)
 
-	err = writer.writeFile(data.Contents, filePath, 0644)
+	err = writer.writeAndVerifyFile(data.Contents, filePath, 0644)
 	if err != nil {
 		return nil, err
 	}
@@ -210,7 +269,7 @@ func writeSSLCertContents(secretID, targetDir string, log *tools.Logger) ([]stri
 	certPath := filepath.Join(targetDir, certFilename)
 	keyPath := filepath.Join(targetDir, keyFilename)
 
-	// Write certificate file with 644 permissions
+	// Write and verify certificate file with 644 permissions
 	log.Info("Writing certificate to: %s", certPath)
 	err = writeFileWithPermissions(data.Certificate, certPath, 0644)
 	if err != nil {
@@ -222,7 +281,13 @@ func writeSSLCertContents(secretID, targetDir string, log *tools.Logger) ([]stri
 			err, certPath, targetDir, os.Args[0], filepath.Dir(certPath))
 	}
 
-	// Write key file with 600 permissions (more restrictive for private key)
+	// Verify certificate file
+	err = verifyFileChecksum(certPath, data.Certificate, log)
+	if err != nil {
+		return nil, err
+	}
+
+	// Write and verify key file with 600 permissions (more restrictive for private key)
 	log.Info("Writing key to: %s", keyPath)
 	err = writeFileWithPermissions(data.PrivateKey, keyPath, 0600)
 	if err != nil {
@@ -232,6 +297,12 @@ func writeSSLCertContents(secretID, targetDir string, log *tools.Logger) ([]stri
 			"  - Target directory does not exist (create it first: mkdir -p %s)\n"+
 			"  - No write permission to directory (try: sudo %s or chmod +w %s)",
 			err, keyPath, targetDir, os.Args[0], filepath.Dir(keyPath))
+	}
+
+	// Verify key file
+	err = verifyFileChecksum(keyPath, data.PrivateKey, log)
+	if err != nil {
+		return nil, err
 	}
 
 	// Change ownership to root:root if running as root
