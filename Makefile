@@ -9,7 +9,7 @@ COMMIT := $(shell git rev-parse HEAD)
 PKG_LIST := $(shell go list ${PKG}/... | grep -v /vendor/)
 GO_FILES := $(shell find . -name '*.go' | grep -v /vendor/)
 CDIR = $(shell pwd)
-EXECUTABLES := sh-pull sh-push sh-generate
+EXECUTABLES := sh-pull sh-push sh-generate sh-contents
 GOOS := linux
 GOARCH := amd64
 
@@ -78,7 +78,7 @@ semver-release: ## Create a semver release tarball with install script
 		echo 'SCRIPT_DIR="$$(cd "$$(dirname "$$0")" && pwd)"' >> $$RELEASE_DIR/install.sh; \
 		echo '' >> $$RELEASE_DIR/install.sh; \
 		echo '# Copy binaries and make them executable' >> $$RELEASE_DIR/install.sh; \
-		echo 'for binary in sh-pull sh-push sh-generate; do' >> $$RELEASE_DIR/install.sh; \
+		echo 'for binary in sh-pull sh-push sh-generate sh-contents; do' >> $$RELEASE_DIR/install.sh; \
 		echo '  if [ -f "$$SCRIPT_DIR/$$binary" ]; then' >> $$RELEASE_DIR/install.sh; \
 		echo '    echo "  Installing $$binary..."' >> $$RELEASE_DIR/install.sh; \
 		echo '    cp "$$SCRIPT_DIR/$$binary" "$$INSTALL_DIR/"' >> $$RELEASE_DIR/install.sh; \
@@ -95,6 +95,7 @@ semver-release: ## Create a semver release tarball with install script
 		echo 'echo "  - $$INSTALL_DIR/sh-pull"' >> $$RELEASE_DIR/install.sh; \
 		echo 'echo "  - $$INSTALL_DIR/sh-push"' >> $$RELEASE_DIR/install.sh; \
 		echo 'echo "  - $$INSTALL_DIR/sh-generate"' >> $$RELEASE_DIR/install.sh; \
+		echo 'echo "  - $$INSTALL_DIR/sh-contents"' >> $$RELEASE_DIR/install.sh; \
 		echo 'echo ""' >> $$RELEASE_DIR/install.sh; \
 		echo 'if echo "$$PATH" | grep -q "$$INSTALL_DIR"; then' >> $$RELEASE_DIR/install.sh; \
 		echo '  echo "$$INSTALL_DIR is in your PATH"' >> $$RELEASE_DIR/install.sh; \
@@ -141,13 +142,7 @@ semver-release: ## Create a semver release tarball with install script
 		echo "  https://cli.github.com/"; \
 	fi
 
-release: git-status build
-	mkdir -p release/$(COMMIT)
-	@for o in $(GOOS); do \
-	  for a in $(GOARCH); do \
-        tar -C ./build/$(COMMIT)/$${o}/$${a} -czvf release/$(COMMIT)/secret-hoard_$(COMMIT)_$${o}_$${a}.tar.gz . ; \
-	  done \
-    done ; \
+ \
 
 shellcheck: ## use black to format python files
 	( \
@@ -214,4 +209,4 @@ download: ## download biometric aware ssl cert tarball
 upload: ## upload biometric aware ssl tarball
 	bash scripts/upload.sh
 
-.PHONY: build release semver-release check-release static vet lint fmt gocyclo goimports test ${EXECUTABLES}
+.PHONY: build semver-release check-release static vet lint fmt gocyclo goimports test ${EXECUTABLES}

@@ -23,7 +23,7 @@ Each secret is tagged with metadata and stored in a consistent format for easy r
 
 ## Commands
 
-secret-hoard provides 3 commands that work for all secret types:
+secret-hoard provides 4 commands that work for all secret types:
 
 ---
 
@@ -161,6 +161,133 @@ sh-push -metadata=~/.secret-hoard/jsondoc.dev.app-config.metadata.json
 #
 # Secret updated successfully: jsondoc/dev/app-config
 ```
+
+---
+
+### sh-contents - Download Secret Contents
+
+Download secret contents directly to files for use in scripts. Outputs absolute paths to stdout for easy scripting.
+
+**Supported types:** jsondoc, textfile, sslcert
+
+**Secret ID Formats:**
+- User-friendly: `textfile/`, `sslcert/` (recommended)
+- AWS native: `text_file/`, `ssl_certificate/` (also supported)
+- Both formats work identically - the tool normalizes automatically
+
+**Usage:**
+```bash
+sh-contents [OPTIONS] <secret-id> <target-directory>
+```
+
+**Options:**
+- `-debug` - Show verbose output (version, progress, debug info)
+
+**Output Modes:**
+- **Normal mode (default):** Prints only the absolute path(s) to stdout - perfect for scripts
+- **Debug mode (-debug):** Shows version, progress messages, and paths
+
+**Examples:**
+
+```bash
+# Normal mode - minimal output (only path)
+$ sh-contents jsondoc/dev/app-config /tmp
+/tmp/jsondoc.dev.app-config.contents.json
+
+# Debug mode - verbose output
+$ sh-contents -debug jsondoc/dev/app-config /tmp
+sh-contents version: abc123
+Fetching secret: jsondoc/dev/app-config
+Writing to: /tmp/jsondoc.dev.app-config.contents.json
+Successfully wrote jsondoc contents
+/tmp/jsondoc.dev.app-config.contents.json
+
+# Text File - outputs single file path
+$ sh-contents textfile/prod/api-key /tmp
+/tmp/textfile.prod.api-key.contents.txt
+
+# SSL Certificate - outputs base path (append .crt or .key)
+$ sudo sh-contents sslcert/prod/example.com /etc/ssl
+/etc/ssl/sslcert.prod.example.com
+
+# Files created on disk:
+$ ls -la /etc/ssl/sslcert.prod.example.com.*
+-rw-r--r-- 1 root root 1234 Jun 25 10:00 /etc/ssl/sslcert.prod.example.com.crt
+-rw------- 1 root root 1679 Jun 25 10:00 /etc/ssl/sslcert.prod.example.com.key
+
+# Note: AWS formats also work (automatically normalized)
+$ sh-contents text_file/prod/api-key /tmp
+$ sh-contents ssl_certificate/prod/example.com /etc/ssl
+```
+
+**Bash scripting:**
+
+The minimal output mode makes scripting simple - just capture the path:
+
+```bash
+# JSON config - no need to filter stderr, output is already clean
+CONFIG=$(sh-contents jsondoc/dev/app-config /tmp)
+cat "$CONFIG"
+
+# Text file content
+API_KEY_FILE=$(sh-contents textfile/prod/api-key /tmp)
+export API_KEY=$(cat "$API_KEY_FILE")
+
+# SSL certificate - append extensions
+CERT=$(sudo sh-contents sslcert/prod/example.com /etc/nginx/ssl)
+cat > /etc/nginx/conf.d/ssl.conf <<EOF
+ssl_certificate ${CERT}.crt;
+ssl_certificate_key ${CERT}.key;
+EOF
+
+# Error handling
+if CONFIG=$(sh-contents jsondoc/dev/app-config /tmp 2>/dev/null); then
+    echo "Success: $CONFIG"
+else
+    echo "Failed to fetch secret" >&2
+    exit 1
+fi
+```
+
+**Format Flexibility:**
+
+The `sh-contents` command accepts secret IDs in either user-friendly or AWS-native formats:
+
+| Type | User-Friendly | AWS Format | Both Work |
+|------|---------------|------------|-----------|
+| Text File | `textfile/` | `text_file/` | ✅ |
+| SSL Certificate | `sslcert/` | `ssl_certificate/` | ✅ |
+| JSON Document | `jsondoc/` | `jsondoc/` | N/A (same) |
+
+The tool automatically normalizes to AWS format before API calls. Use whichever format you prefer - they work identically.
+
+**Data Integrity:**
+
+Every file written by `sh-contents` is automatically verified using SHA256 checksums:
+- Checksum calculated before writing
+- File written to disk
+- Checksum verified after writing
+- Operation fails with exit code 1 if corruption detected
+
+This protects against:
+- Disk corruption or hardware failures
+- Filesystem issues
+- Partial writes due to disk space issues
+- Concurrent modification
+
+If verification fails, the error shows both expected and actual checksums for debugging.
+
+**SSL Certificate Security:**
+- Certificate file (`.crt`): 644 permissions (world-readable)
+- Private key file (`.key`): 600 permissions (owner-only)
+- If run as root: files owned by root:root
+- Private keys are automatically secured with restrictive permissions
+
+**Key differences from sh-pull:**
+- sh-pull: Downloads to `~/.secret-hoard/` for editing
+- sh-contents: Downloads to specified directory for immediate use
+- sh-contents: Designed for automation and scripts
+- sh-contents: Outputs paths to stdout (stderr for logs)
 
 ---
 
@@ -334,10 +461,10 @@ All commands use `~/.secret-hoard/` as the default working directory for local f
 make build
 
 # Or build individually
-go build -o bin/sh-upload ./cmd/sh-upload
 go build -o bin/sh-pull ./cmd/sh-pull
 go build -o bin/sh-push ./cmd/sh-push
 go build -o bin/sh-generate ./cmd/sh-generate
+go build -o bin/sh-contents ./cmd/sh-contents
 
 # Add to PATH
 export PATH=$PATH:$(pwd)/bin
@@ -374,19 +501,19 @@ make static
 ```
 secret-hoard/
 ├── cmd/                    # Command-line executables
-│   ├── sh-upload/         # Batch CSV upload
 │   ├── sh-pull/           # Interactive/flag download
 │   ├── sh-push/           # Upload with diff
-│   └── sh-generate/       # Scaffolding generator
+│   ├── sh-generate/       # Scaffolding generator
+│   └── sh-contents/       # Download contents for scripts
 ├── jsondoc/               # JSON document secret type
 ├── rdspostgres/           # RDS PostgreSQL secret type
 ├── snowflake/             # Snowflake secret type
 ├── sslcert/               # SSL certificate secret type
 ├── textfile/              # Text file secret type
+├── contents/              # Contents download logic
 ├── pull/                  # Pull logic
 ├── push/                  # Push logic
 ├── generate/              # Generation logic
-├── uploader/              # CSV upload logic
 ├── secretlogic/           # Pure business logic (testable)
 └── tools/                 # Shared utilities
 ```
@@ -452,6 +579,16 @@ done
 - Safer for production environments
 
 ---
+
+## Release Process
+
+See [RELEASE.md](RELEASE.md) for instructions on creating and publishing releases.
+
+Quick start:
+```bash
+make semver-release  # Create semantic version release
+make check-release   # View latest published release
+```
 
 ## Contributing
 
