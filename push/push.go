@@ -582,9 +582,15 @@ func extractPrivateKeyModulus(keyFile string) (string, error) {
 		return "", fmt.Errorf("failed to decode private key PEM")
 	}
 
+	// Try PKCS#8 format first (BEGIN PRIVATE KEY)
 	privateKey, err := x509.ParsePKCS8PrivateKey(block.Bytes)
 	if err != nil {
-		return "", err
+		// Fall back to PKCS#1 format (BEGIN RSA PRIVATE KEY)
+		rsaKey, pkcs1Err := x509.ParsePKCS1PrivateKey(block.Bytes)
+		if pkcs1Err != nil {
+			return "", fmt.Errorf("failed to parse private key as PKCS#8 or PKCS#1: PKCS#8 error: %v, PKCS#1 error: %v", err, pkcs1Err)
+		}
+		return rsaKey.N.String(), nil
 	}
 
 	rsaPrivateKey, ok := privateKey.(*rsa.PrivateKey)
