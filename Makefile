@@ -25,9 +25,9 @@ ${EXECUTABLES}:
         echo "$(COMMIT)/$${o}/$${a}" ; \
         mkdir -p build/$(COMMIT)/$${o}/$${a} ; \
         echo "COMMIT: $(COMMIT)" >> build/$(COMMIT)/$${o}/$${a}/version.txt ; \
-        env GOOS=$${o} GOARCH=$${a} \
+        env CGO_ENABLED=0 GOOS=$${o} GOARCH=$${a} \
         go build  -v -o build/$(COMMIT)/$${o}/$${a}/$@ \
-				-ldflags="-X github.com/natemarks/secret-hoard/version.Version=${COMMIT}" ${PKG}/cmd/$@; \
+				-ldflags="-s -w -X github.com/natemarks/secret-hoard/version.Version=${COMMIT}" ${PKG}/cmd/$@; \
 	  done \
     done ; \
 
