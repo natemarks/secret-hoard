@@ -1,6 +1,6 @@
 module github.com/natemarks/secret-hoard
 
-go 1.21.3
+go 1.25.13
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.25.0
