@@ -454,6 +454,31 @@ All commands use `~/.secret-hoard/` as the default working directory for local f
 
 ## Installation
 
+### Remote install (recommended)
+
+Download, verify, and install in one step using the remote installer:
+
+```bash
+# System-wide install to /usr/local/bin (requires sudo)
+curl -fsSL https://raw.githubusercontent.com/natemarks/secret-hoard/main/scripts/install.sh \
+  | sudo bash -s -- v1.2.0
+
+# User install to $HOME/bin
+curl -fsSL https://raw.githubusercontent.com/natemarks/secret-hoard/main/scripts/install.sh \
+  | bash -s -- v1.2.0 "$HOME/bin"
+
+# Custom directory
+curl -fsSL https://raw.githubusercontent.com/natemarks/secret-hoard/main/scripts/install.sh \
+  | sudo bash -s -- v1.2.0 /opt/bin
+```
+
+The installer downloads the release tarball and `checksums.txt`, verifies the sha256 checksum before extracting, then copies the binaries to the install directory.
+
+**Note:** releases are linux/amd64 only.
+
+Replace `v1.2.0` with the desired release version. Find available versions at:
+https://github.com/natemarks/secret-hoard/releases
+
 ### Build from source
 
 ```bash

@@ -48,7 +48,7 @@ check-release: ## Check version and description of latest GitHub release
 		jq -r '"Version: \(.tagName)\nName: \(.name)\nAuthor: \(.author.login)\nCreated: \(.createdAt)\nURL: \(.url)\n\nDescription:\n\(.body)"' || \
 		echo "No releases found or error accessing GitHub"
 
-semver-release: ## Create a semver release tarball with install script
+semver-release: ## Create a semver release tarball with checksums
 	@read -p "Enter semver version (e.g., v1.0.0): " VERSION; \
 	if [ -z "$$VERSION" ]; then \
 		echo "Error: Version cannot be empty"; \
@@ -63,52 +63,13 @@ semver-release: ## Create a semver release tarball with install script
 		RELEASE_DIR="release/$$VERSION/tmp_$${o}_$${a}"; \
 		mkdir -p $$RELEASE_DIR; \
 		cp build/$(COMMIT)/$${o}/$${a}/sh-* $$RELEASE_DIR/; \
-		echo '#!/bin/bash' > $$RELEASE_DIR/install.sh; \
-		echo 'set -e' >> $$RELEASE_DIR/install.sh; \
-		echo '' >> $$RELEASE_DIR/install.sh; \
-		echo '# Install secret-hoard binaries to $$HOME/bin' >> $$RELEASE_DIR/install.sh; \
-		echo 'INSTALL_DIR="$$HOME/bin"' >> $$RELEASE_DIR/install.sh; \
-		echo '' >> $$RELEASE_DIR/install.sh; \
-		echo 'echo "Installing secret-hoard to $$INSTALL_DIR..."' >> $$RELEASE_DIR/install.sh; \
-		echo '' >> $$RELEASE_DIR/install.sh; \
-		echo '# Create directory if it does not exist' >> $$RELEASE_DIR/install.sh; \
-		echo 'mkdir -p "$$INSTALL_DIR"' >> $$RELEASE_DIR/install.sh; \
-		echo '' >> $$RELEASE_DIR/install.sh; \
-		echo '# Get the directory where this script is located' >> $$RELEASE_DIR/install.sh; \
-		echo 'SCRIPT_DIR="$$(cd "$$(dirname "$$0")" && pwd)"' >> $$RELEASE_DIR/install.sh; \
-		echo '' >> $$RELEASE_DIR/install.sh; \
-		echo '# Copy binaries and make them executable' >> $$RELEASE_DIR/install.sh; \
-		echo 'for binary in sh-pull sh-push sh-generate sh-contents; do' >> $$RELEASE_DIR/install.sh; \
-		echo '  if [ -f "$$SCRIPT_DIR/$$binary" ]; then' >> $$RELEASE_DIR/install.sh; \
-		echo '    echo "  Installing $$binary..."' >> $$RELEASE_DIR/install.sh; \
-		echo '    cp "$$SCRIPT_DIR/$$binary" "$$INSTALL_DIR/"' >> $$RELEASE_DIR/install.sh; \
-		echo '    chmod +x "$$INSTALL_DIR/$$binary"' >> $$RELEASE_DIR/install.sh; \
-		echo '  else' >> $$RELEASE_DIR/install.sh; \
-		echo '    echo "  Warning: $$binary not found"' >> $$RELEASE_DIR/install.sh; \
-		echo '  fi' >> $$RELEASE_DIR/install.sh; \
-		echo 'done' >> $$RELEASE_DIR/install.sh; \
-		echo '' >> $$RELEASE_DIR/install.sh; \
-		echo 'echo ""' >> $$RELEASE_DIR/install.sh; \
-		echo 'echo "Installation complete!"' >> $$RELEASE_DIR/install.sh; \
-		echo 'echo ""' >> $$RELEASE_DIR/install.sh; \
-		echo 'echo "Installed binaries:"' >> $$RELEASE_DIR/install.sh; \
-		echo 'echo "  - $$INSTALL_DIR/sh-pull"' >> $$RELEASE_DIR/install.sh; \
-		echo 'echo "  - $$INSTALL_DIR/sh-push"' >> $$RELEASE_DIR/install.sh; \
-		echo 'echo "  - $$INSTALL_DIR/sh-generate"' >> $$RELEASE_DIR/install.sh; \
-		echo 'echo "  - $$INSTALL_DIR/sh-contents"' >> $$RELEASE_DIR/install.sh; \
-		echo 'echo ""' >> $$RELEASE_DIR/install.sh; \
-		echo 'if echo "$$PATH" | grep -q "$$INSTALL_DIR"; then' >> $$RELEASE_DIR/install.sh; \
-		echo '  echo "$$INSTALL_DIR is in your PATH"' >> $$RELEASE_DIR/install.sh; \
-		echo 'else' >> $$RELEASE_DIR/install.sh; \
-		echo '  echo "NOTE: Add $$INSTALL_DIR to your PATH by adding this to your ~/.bashrc or ~/.zshrc:"' >> $$RELEASE_DIR/install.sh; \
-		echo '  echo \"  export PATH=\$$HOME/bin:\$$PATH\"' >> $$RELEASE_DIR/install.sh; \
-		echo 'fi' >> $$RELEASE_DIR/install.sh; \
-		chmod +x $$RELEASE_DIR/install.sh; \
 		tar -C $$RELEASE_DIR -czf release/$$VERSION/secret-hoard_$$VERSION\_$${o}_$${a}.tar.gz .; \
 		rm -rf $$RELEASE_DIR; \
 		echo "Created release/$$VERSION/secret-hoard_$$VERSION\_$${o}_$${a}.tar.gz"; \
 	  done; \
 	done; \
+	(cd release/$$VERSION && sha256sum *.tar.gz > checksums.txt); \
+	echo "Created release/$$VERSION/checksums.txt"; \
 	echo ""; \
 	echo "Release $$VERSION created successfully!"; \
 	echo "Release files:"; \
@@ -132,6 +93,7 @@ semver-release: ## Create a semver release tarball with install script
 			echo "Creating GitHub release..."; \
 			gh release create "$$VERSION" \
 				release/$$VERSION/*.tar.gz \
+				release/$$VERSION/checksums.txt \
 				--title "$$TITLE" \
 				--notes "$$NOTES"; \
 			echo "GitHub release created!"; \
