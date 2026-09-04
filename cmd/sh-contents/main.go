@@ -23,6 +23,14 @@ func main() {
 		log.Debug("config: %+v", cfg)
 	}
 
+	if cfg.TargetDir == "" {
+		if err := contents.EmitSecretContents(cfg.SecretID, os.Stdout, log); err != nil {
+			log.Error("EmitSecretContents() error: %v", err)
+			os.Exit(1)
+		}
+		return
+	}
+
 	paths, err := contents.WriteSecretContents(cfg.SecretID, cfg.TargetDir, log)
 	if err != nil {
 		log.Error("WriteSecretContents() error: %v", err)

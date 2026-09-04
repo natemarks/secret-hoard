@@ -1,4 +1,5 @@
 .DEFAULT_GOAL := help
+SHELL := /bin/bash
 
 # Determine this makefile's path.
 # Be sure to place this BEFORE `include` directives, if any.
