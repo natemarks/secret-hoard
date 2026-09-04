@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -328,6 +329,73 @@ func writeSSLCertContents(secretID, targetDir string, log *tools.Logger) ([]stri
 	log.Info("Certificate permissions: 644, Key permissions: 600")
 	log.Info("Base path: %s", absBasePath)
 	return []string{absBasePath}, nil
+}
+
+// EmitSecretContents writes secret content directly to w (no disk write).
+// Supported types: jsondoc, textfile.
+// sslcert is not supported — it requires two files and must use WriteSecretContents.
+func EmitSecretContents(secretID string, w io.Writer, log *tools.Logger) error {
+	parts := strings.Split(secretID, "/")
+	if len(parts) < 2 {
+		return fmt.Errorf("invalid secret ID format: %s\n"+
+			"Expected format: <type>/<env>/<identifier>\n"+
+			"Examples:\n"+
+			"  jsondoc/dev/app-config\n"+
+			"  textfile/prod/api-key", secretID)
+	}
+
+	secretType := parts[0]
+	log.Debug("Secret type: %s", secretType)
+	log.Debug("Secret ID: %s", secretID)
+
+	switch secretType {
+	case "jsondoc":
+		return emitJSONDocContents(secretID, w, log)
+	case "textfile", "text_file":
+		return emitTextFileContents(secretID, w, log)
+	case "sslcert", "ssl_certificate":
+		return fmt.Errorf("sslcert produces two files (.crt and .key) and cannot be written to stdout\n" +
+			"Usage: sh-contents sslcert/<env>/<commonName> <target-dir>")
+	default:
+		return fmt.Errorf("unsupported secret type: %s\n"+
+			"Supported types for stdout mode: jsondoc, textfile\n"+
+			"Examples:\n"+
+			"  jsondoc/dev/app-config\n"+
+			"  textfile/prod/api-key", secretType)
+	}
+}
+
+func emitJSONDocContents(secretID string, w io.Writer, log *tools.Logger) error {
+	writer := &secretWriter{secretID: secretID, log: log}
+	secretValue, err := writer.fetchAndParse()
+	if err != nil {
+		return err
+	}
+
+	var data jsondoc.Data
+	if err = json.Unmarshal([]byte(secretValue), &data); err != nil {
+		return fmt.Errorf("failed to parse secret data as JSON: %w\nSecret ID: %s", err, secretID)
+	}
+
+	_, err = fmt.Fprint(w, data.JSONContents)
+	return err
+}
+
+func emitTextFileContents(secretID string, w io.Writer, log *tools.Logger) error {
+	normalizedID := secretlogic.NormalizeSecretID(secretID)
+	writer := &secretWriter{secretID: normalizedID, log: log}
+	secretValue, err := writer.fetchAndParse()
+	if err != nil {
+		return err
+	}
+
+	var data textfile.Data
+	if err = json.Unmarshal([]byte(secretValue), &data); err != nil {
+		return fmt.Errorf("failed to parse secret data as JSON: %w\nSecret ID: %s", err, secretID)
+	}
+
+	_, err = fmt.Fprint(w, data.Contents)
+	return err
 }
 
 // writeFileWithPermissions writes a file with specific permissions

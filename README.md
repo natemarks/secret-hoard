@@ -177,8 +177,10 @@ Download secret contents directly to files for use in scripts. Outputs absolute 
 
 **Usage:**
 ```bash
-sh-contents [OPTIONS] <secret-id> <target-directory>
+sh-contents [OPTIONS] <secret-id> [target-directory]
 ```
+
+Omit `target-directory` to write content directly to stdout (jsondoc, textfile only — sslcert requires a target directory because it produces two files).
 
 **Options:**
 - `-debug` - Show verbose output (version, progress, debug info)
@@ -190,11 +192,18 @@ sh-contents [OPTIONS] <secret-id> <target-directory>
 **Examples:**
 
 ```bash
-# Normal mode - minimal output (only path)
+# Stdout mode — content goes directly to stdout, nothing written to disk
+$ sh-contents jsondoc/dev/app-config > config.json
+$ sh-contents textfile/prod/api-key > api-key.txt
+
+# Stdout mode — pipe directly into another command
+$ sh-contents jsondoc/dev/app-config | jq .
+
+# File mode — writes to target directory, prints path to stdout
 $ sh-contents jsondoc/dev/app-config /tmp
 /tmp/jsondoc.dev.app-config.contents.json
 
-# Debug mode - verbose output
+# File mode — debug output
 $ sh-contents -debug jsondoc/dev/app-config /tmp
 sh-contents version: abc123
 Fetching secret: jsondoc/dev/app-config
@@ -202,11 +211,11 @@ Writing to: /tmp/jsondoc.dev.app-config.contents.json
 Successfully wrote jsondoc contents
 /tmp/jsondoc.dev.app-config.contents.json
 
-# Text File - outputs single file path
+# Text File file mode - outputs single file path
 $ sh-contents textfile/prod/api-key /tmp
 /tmp/textfile.prod.api-key.contents.txt
 
-# SSL Certificate - outputs base path (append .crt or .key)
+# SSL Certificate — always requires target directory (two files)
 $ sudo sh-contents sslcert/prod/example.com /etc/ssl
 /etc/ssl/sslcert.prod.example.com
 

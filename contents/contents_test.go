@@ -1,6 +1,7 @@
 package contents
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"strings"
@@ -231,6 +232,65 @@ func TestVerifyFileChecksum(t *testing.T) {
 				if !strings.Contains(errMsg, "Expected") || !strings.Contains(errMsg, "Actual") {
 					t.Errorf("error message should show expected vs actual, got: %v", errMsg)
 				}
+			}
+		})
+	}
+}
+
+func TestEmitSecretContents_InvalidInput(t *testing.T) {
+	log := tools.NewLogger(false)
+
+	tests := []struct {
+		name        string
+		secretID    string
+		wantErr     bool
+		errContains string
+	}{
+		{
+			name:        "empty secret ID",
+			secretID:    "",
+			wantErr:     true,
+			errContains: "invalid secret ID format",
+		},
+		{
+			name:        "no slash",
+			secretID:    "invalid",
+			wantErr:     true,
+			errContains: "invalid secret ID format",
+		},
+		{
+			name:        "unsupported type",
+			secretID:    "rdspostgres/dev/test",
+			wantErr:     true,
+			errContains: "unsupported secret type",
+		},
+		{
+			name:        "sslcert rejected with clear message",
+			secretID:    "sslcert/prod/example.com",
+			wantErr:     true,
+			errContains: "two files",
+		},
+		{
+			name:        "ssl_certificate alias also rejected",
+			secretID:    "ssl_certificate/prod/example.com",
+			wantErr:     true,
+			errContains: "two files",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			err := EmitSecretContents(tt.secretID, &buf, log)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("EmitSecretContents() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if tt.wantErr && !strings.Contains(err.Error(), tt.errContains) {
+				t.Errorf("error %q does not contain %q", err.Error(), tt.errContains)
+			}
+			if tt.wantErr && buf.Len() > 0 {
+				t.Errorf("expected no output on error, got %q", buf.String())
 			}
 		})
 	}
